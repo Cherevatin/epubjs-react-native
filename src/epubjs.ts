@@ -2098,6 +2098,7 @@ export default `
             (a.style.lineHeight = "0"),
             (a.style.verticalAlign = "top"),
             (a.style.position = "relative"),
+            (a.style.overflowAnchor = "none"),
             "horizontal" === r &&
               ((a.style.display = "flex"),
               (a.style.flexDirection = "row"),
