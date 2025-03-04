@@ -281,6 +281,13 @@ export default `
         }));
       });
 
+      rendition.on("footnoteclicked", function (content) {
+        reactNativeWebview.postMessage(JSON.stringify({
+          type: 'onFootNoteClicked',
+          content: content
+        }));
+      });
+
       rendition.on("rendered", function (section) {
         reactNativeWebview.postMessage(JSON.stringify({
           type: 'onRendered',

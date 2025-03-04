@@ -641,6 +641,7 @@ export default `
             SELECTED: "selected",
             SELECTED_RANGE: "selectedRange",
             LINK_CLICKED: "linkClicked",
+            FOOT_NOTE_CLICKED: "footnoteclicked",
           },
           LOCATIONS: { CHANGED: "changed" },
           MANAGERS: {
@@ -1840,6 +1841,7 @@ export default `
       }
       function h(t, e) {
         var i = t.querySelectorAll("a[href]");
+        var contents = t;
         if (i.length)
           for (
             var s = Object(n.qs)(t.ownerDocument, "base"),
@@ -1853,6 +1855,20 @@ export default `
                     try {
                       n = new r.a(i, o);
                     } catch (t) {}
+                    if ("noteref" === t.getAttribute("epub:type")) {
+                      const link = i.split("#")[1];
+                      var footnote = contents.querySelectorAll(\`aside[id=\${link}]\`);
+                      if(footnote.length && footnote[0].getAttribute("epub:type") === "footnote"){
+                        var content = footnote[0].textContent || footnote[0].innerText;
+                        t.onclick = function () {
+                          return (                   
+                              e(link, content),
+                              !1
+                          );
+                        };
+                        return
+                      }
+                    }                  
                     t.onclick = function () {
                       return (
                         n && n.hash
@@ -3981,8 +3997,13 @@ export default `
           return new a.a(e, r).page(this, t, i, n);
         }
         linksHandler() {
-          Object(h.c)(this.content, (t) => {
-            this.emit(l.c.CONTENTS.LINK_CLICKED, t);
+          Object(h.c)(this.content, (t, content) => {
+            if(content) {
+              this.emit(l.c.CONTENTS.FOOT_NOTE_CLICKED, content);
+            }
+            else{
+              this.emit(l.c.CONTENTS.LINK_CLICKED, t);
+            }
           });
         }
         writingMode(t) {
