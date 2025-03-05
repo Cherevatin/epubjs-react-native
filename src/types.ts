@@ -449,7 +449,7 @@ export interface ReaderProps {
   /**
    * Called when footnote ref is pressed
    */
-  onPressFootnote?: (content: string) => void;
+  onPressFootnote?: (innerHTML: string) => void;
 
   initialAnnotations?: Annotation[];
 

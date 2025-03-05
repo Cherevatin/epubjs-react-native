@@ -320,10 +320,10 @@ export default `
         }
       });
 
-      rendition.on("footnoteClicked", function (content) {
+      rendition.on("footnoteClicked", function (innerHTML) {
         reactNativeWebview.postMessage(JSON.stringify({
           type: 'onPressFootnote',
-          content: content
+          innerHTML: innerHTML
         }));
       });
 

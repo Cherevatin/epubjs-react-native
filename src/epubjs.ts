@@ -1860,10 +1860,9 @@ export default `
                       var link = i.split("#")[1];
                       var footnote = contents.querySelectorAll(\`aside[id=\${link}]\`);
                       if(footnote.length && footnote[0].getAttribute("epub:type") === "footnote"){
-                        var content = footnote[0].innerHTML;
                         t.onclick = function () {
                           return (                   
-                              e(link, content),
+                              e(link, footnote[0].innerHTML),
                               !1
                           );
                         };

@@ -322,9 +322,9 @@ export function View({
     }
 
     if (type === 'onPressFootnote') {
-      const { content } = parsedEvent;
+      const { innerHTML } = parsedEvent;
 
-      return onPressFootnote(content);
+      return onPressFootnote(innerHTML);
     }
 
     if (type === 'onAddBookmark') {
