@@ -641,6 +641,7 @@ export default `
             SELECTED: "selected",
             SELECTED_RANGE: "selectedRange",
             LINK_CLICKED: "linkClicked",
+            FOOTNOTE_CLICKED: "footnoteClicked",
           },
           LOCATIONS: { CHANGED: "changed" },
           MANAGERS: {
@@ -677,6 +678,7 @@ export default `
             MARK_CLICKED: "markClicked",
             SELECTED: "selected",
             LAYOUT: "layout",
+            FOOTNOTE_CLICKED: "footnoteClicked",
           },
           LAYOUT: { UPDATED: "updated" },
           ANNOTATION: { ATTACH: "attach", DETACH: "detach" },
@@ -1840,6 +1842,7 @@ export default `
       }
       function h(t, e) {
         var i = t.querySelectorAll("a[href]");
+        var contents = t;
         if (i.length)
           for (
             var s = Object(n.qs)(t.ownerDocument, "base"),
@@ -1853,6 +1856,19 @@ export default `
                     try {
                       n = new r.a(i, o);
                     } catch (t) {}
+                    if ("noteref" === t.getAttribute("epub:type")) {
+                      var link = i.split("#")[1];
+                      var footnote = contents.querySelectorAll(\`aside[id=\${link}]\`);
+                      if(footnote.length && footnote[0].getAttribute("epub:type") === "footnote"){
+                        t.onclick = function () {
+                          return (                   
+                              e(link, footnote[0].innerHTML),
+                              !1
+                          );
+                        };
+                        return
+                      }
+                    }                  
                     t.onclick = function () {
                       return (
                         n && n.hash
@@ -3981,8 +3997,8 @@ export default `
           return new a.a(e, r).page(this, t, i, n);
         }
         linksHandler() {
-          Object(h.c)(this.content, (t) => {
-            this.emit(l.c.CONTENTS.LINK_CLICKED, t);
+          Object(h.c)(this.content, (t, content) => {
+            content?this.emit(l.c.CONTENTS.FOOTNOTE_CLICKED,content):this.emit(l.c.CONTENTS.LINK_CLICKED,t);
           });
         }
         writingMode(t) {
@@ -4807,6 +4823,7 @@ export default `
             (this.hooks.render = new o.a(this)),
             (this.hooks.show = new o.a(this)),
             this.hooks.content.register(this.handleLinks.bind(this)),
+            this.hooks.content.register(this.handleFootnotes.bind(this)),
             this.hooks.content.register(this.passEvents.bind(this)),
             this.hooks.content.register(this.adjustImages.bind(this)),
             this.book.spine.hooks.content.register(
@@ -5230,6 +5247,12 @@ export default `
             t.on(l.c.CONTENTS.LINK_CLICKED, (t) => {
               let e = this.book.path.relative(t);
               this.display(e);
+            });
+        }
+        handleFootnotes(t) {
+          t &&
+            t.on(l.c.CONTENTS.FOOTNOTE_CLICKED, (t) => {
+              this.emit(l.c.RENDITION.FOOTNOTE_CLICKED, t);
             });
         }
         injectStylesheet(t, e) {
