@@ -1,5 +1,4 @@
 import { DimensionValue, ViewStyle } from 'react-native';
-import { SourceType } from './utils/enums/source-type.enum';
 
 export type PaginateOptions = {
   keepScrollOffset?: boolean;
@@ -201,8 +200,6 @@ export interface ReaderProps {
    * @param {object} src
    */
   src: string;
-  srcType?: SourceType.EPUB | SourceType.OPF;
-  srcName?: string;
   /**
    * @param {ePubCfi[]} locations
    * @example
