@@ -281,13 +281,6 @@ export default `
         }));
       });
 
-      rendition.on("footnoteclicked", function (content) {
-        reactNativeWebview.postMessage(JSON.stringify({
-          type: 'onFootNoteClicked',
-          content: content
-        }));
-      });
-
       rendition.on("rendered", function (section) {
         reactNativeWebview.postMessage(JSON.stringify({
           type: 'onRendered',
@@ -325,6 +318,13 @@ export default `
             annotation: ${webViewJavaScriptFunctions.mapObjectToAnnotation('annotation')}
           }));
         }
+      });
+
+      rendition.on("footnoteClicked", function (content) {
+        reactNativeWebview.postMessage(JSON.stringify({
+          type: 'onPressFootnote',
+          content: content
+        }));
       });
 
       rendition.on("resized", function (layout) {

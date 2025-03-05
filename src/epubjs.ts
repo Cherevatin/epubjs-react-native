@@ -641,7 +641,7 @@ export default `
             SELECTED: "selected",
             SELECTED_RANGE: "selectedRange",
             LINK_CLICKED: "linkClicked",
-            FOOT_NOTE_CLICKED: "footnoteclicked",
+            FOOTNOTE_CLICKED: "footnoteClicked",
           },
           LOCATIONS: { CHANGED: "changed" },
           MANAGERS: {
@@ -678,6 +678,7 @@ export default `
             MARK_CLICKED: "markClicked",
             SELECTED: "selected",
             LAYOUT: "layout",
+            FOOTNOTE_CLICKED: "footnoteClicked",
           },
           LAYOUT: { UPDATED: "updated" },
           ANNOTATION: { ATTACH: "attach", DETACH: "detach" },
@@ -1856,10 +1857,10 @@ export default `
                       n = new r.a(i, o);
                     } catch (t) {}
                     if ("noteref" === t.getAttribute("epub:type")) {
-                      const link = i.split("#")[1];
+                      var link = i.split("#")[1];
                       var footnote = contents.querySelectorAll(\`aside[id=\${link}]\`);
                       if(footnote.length && footnote[0].getAttribute("epub:type") === "footnote"){
-                        var content = footnote[0].textContent || footnote[0].innerText;
+                        var content = footnote[0].innerHTML;
                         t.onclick = function () {
                           return (                   
                               e(link, content),
@@ -3998,12 +3999,7 @@ export default `
         }
         linksHandler() {
           Object(h.c)(this.content, (t, content) => {
-            if(content) {
-              this.emit(l.c.CONTENTS.FOOT_NOTE_CLICKED, content);
-            }
-            else{
-              this.emit(l.c.CONTENTS.LINK_CLICKED, t);
-            }
+            content?this.emit(l.c.CONTENTS.FOOTNOTE_CLICKED,content):this.emit(l.c.CONTENTS.LINK_CLICKED,t);
           });
         }
         writingMode(t) {
@@ -4828,6 +4824,7 @@ export default `
             (this.hooks.render = new o.a(this)),
             (this.hooks.show = new o.a(this)),
             this.hooks.content.register(this.handleLinks.bind(this)),
+            this.hooks.content.register(this.handleFootnotes.bind(this)),
             this.hooks.content.register(this.passEvents.bind(this)),
             this.hooks.content.register(this.adjustImages.bind(this)),
             this.book.spine.hooks.content.register(
@@ -5251,6 +5248,12 @@ export default `
             t.on(l.c.CONTENTS.LINK_CLICKED, (t) => {
               let e = this.book.path.relative(t);
               this.display(e);
+            });
+        }
+        handleFootnotes(t) {
+          t &&
+            t.on(l.c.CONTENTS.FOOTNOTE_CLICKED, (t) => {
+              this.emit(l.c.RENDITION.FOOTNOTE_CLICKED, t);
             });
         }
         injectStylesheet(t, e) {
