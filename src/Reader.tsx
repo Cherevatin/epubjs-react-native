@@ -15,6 +15,8 @@ import epubjs from './epubjs';
 
 export function Reader({
   src,
+  srcName,
+  srcType,
   width = '100%',
   height = '100%',
   defaultTheme = initialTheme,
@@ -73,7 +75,7 @@ export function Reader({
       setAllowedUris(`${jszipFileUri},${epubjsFileUri}`);
 
       if (src) {
-        const sourceType = getSourceType(src);
+        const sourceType = srcType ?? getSourceType(src);
         const isExternalSource = isURL(src);
         const isSrcInFs = isFsUri(src);
 
@@ -133,7 +135,7 @@ export function Reader({
         }
 
         if (isExternalSource) {
-          const sourceName = getSourceName(src);
+          const sourceName = srcName ?? getSourceName(src);
 
           if (!sourceName) {
             throw new Error(`Invalid source name: ${src}`);
