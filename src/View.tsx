@@ -10,6 +10,7 @@ import type { Bookmark, ReaderProps } from './types';
 import { OpeningBook } from './utils/OpeningBook';
 import INTERNAL_EVENTS from './utils/internalEvents.util';
 import { GestureHandler } from './utils/GestureHandler';
+import { EventType } from './utils/enums/event-type.enum';
 
 export type ViewProps = Omit<ReaderProps, 'src' | 'fileSystem'> & {
   templateUri: string;
@@ -110,6 +111,7 @@ export function View({
     currentLocation: currLoc,
     setIsSearching,
     setFlow,
+    eventEmitter,
   } = useContext(ReaderContext);
   const book = useRef<WebView>(null);
   const [selectedText, setSelectedText] = useState<{
@@ -317,13 +319,13 @@ export function View({
 
     if (type === 'onPressAnnotation') {
       const { annotation } = parsedEvent;
-
+      eventEmitter.trigger(EventType.OnPressAnnotation, annotation);
       return onPressAnnotation(annotation);
     }
 
     if (type === 'onPressFootnote') {
       const { innerHTML } = parsedEvent;
-
+      eventEmitter.trigger(EventType.OnPressFootnote, innerHTML);
       return onPressFootnote(innerHTML);
     }
 
