@@ -195,14 +195,20 @@ type FileSystem = {
   }>;
 };
 
+export interface OfflineAccess {
+  fileName: string;
+  fileType: SourceType.EPUB;
+}
 export interface ReaderProps {
   /**
    * Can be a `base64`, `epub`, `opf` or `binary`.
    * @param {object} src
    */
   src: string;
-  srcType?: SourceType.EPUB | SourceType.OPF;
-  srcName?: string;
+  /**
+   * Only for external src
+   */
+  offlineAccess?: OfflineAccess;
   /**
    * @param {ePubCfi[]} locations
    * @example

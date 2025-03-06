@@ -15,8 +15,7 @@ import epubjs from './epubjs';
 
 export function Reader({
   src,
-  srcName,
-  srcType,
+  offlineAccess,
   width = '100%',
   height = '100%',
   defaultTheme = initialTheme,
@@ -76,8 +75,8 @@ export function Reader({
       setAllowedUris(`${jszipFileUri},${epubjsFileUri}`);
 
       if (src) {
-        const sourceType = srcType ?? getSourceType(src);
-        const isSrcInFs = isFsUri(src);
+        const sourceType = getSourceType(src, offlineAccess);
+        const isSourceInFileSystem = isFsUri(src);
         const isExternalSource = isURL(src);
         let isExternalSourceAlreadyDownloaded = false;
 
@@ -85,18 +84,20 @@ export function Reader({
           throw new Error(`Invalid source type: ${src}`);
         }
 
-        if (srcName && isExternalSource) {
-          const localSource = `${documentDirectory}${srcName}.${sourceType}`;
+        let source = src;
+        if (offlineAccess && isExternalSource) {
+          const sourceName = getSourceName(source, offlineAccess);
+          const localSource = `${documentDirectory}${sourceName}`;
           const localSourceInfo = await getFileInfo(localSource);
           if (localSourceInfo.exists) {
             isExternalSourceAlreadyDownloaded = true;
-            src = localSourceInfo.uri;
+            source = localSourceInfo.uri;
           }
         }
 
         if (!isExternalSource || isExternalSourceAlreadyDownloaded) {
-          if (isSrcInFs) {
-            setAllowedUris(`${src}${jszipFileUri},${epubjsFileUri}`);
+          if (isSourceInFileSystem) {
+            setAllowedUris(`${source}${jszipFileUri},${epubjsFileUri}`);
           }
           if (sourceType === SourceType.BASE64) {
             setTemplate(
@@ -104,7 +105,7 @@ export function Reader({
                 jszip: jszipFileUri,
                 epubjs: epubjsFileUri,
                 type: SourceType.BASE64,
-                book: src,
+                book: source,
                 theme: defaultTheme,
                 locations: initialLocations,
                 enableSelection,
@@ -126,7 +127,7 @@ export function Reader({
                 jszip: jszipFileUri,
                 epubjs: epubjsFileUri,
                 type: SourceType.BINARY,
-                book: src,
+                book: source,
                 theme: defaultTheme,
                 locations: initialLocations,
                 enableSelection,
@@ -146,9 +147,14 @@ export function Reader({
         }
 
         if (isExternalSource) {
-          const srcContainsName = !!getSourceName(src);
+          const sourceName = getSourceName(source);
+
+          if (!offlineAccess && !sourceName) {
+            throw new Error(`Invalid source name: ${source}`);
+          }
+
           if (
-            srcContainsName &&
+            !offlineAccess &&
             (sourceType === SourceType.OPF || sourceType === SourceType.EPUB)
           ) {
             setTemplate(
@@ -156,7 +162,7 @@ export function Reader({
                 jszip: jszipFileUri,
                 epubjs: epubjsFileUri,
                 type: sourceType,
-                book: src,
+                book: source,
                 theme: defaultTheme,
                 locations: initialLocations,
                 enableSelection,
@@ -173,15 +179,13 @@ export function Reader({
 
             setIsLoading(false);
           } else {
-            const sourceName = srcName
-              ? `${srcName}.${sourceType}`
-              : getSourceName(src);
+            const sourceName = getSourceName(source, offlineAccess);
 
             if (!sourceName) {
-              throw new Error(`Invalid source name: ${src}`);
+              throw new Error(`Invalid source name: ${source}`);
             }
 
-            const { uri: bookFileUri } = await downloadFile(src, sourceName);
+            const { uri: bookFileUri } = await downloadFile(source, sourceName);
 
             if (!bookFileUri) throw new Error("Couldn't download book");
 
