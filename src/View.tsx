@@ -29,6 +29,7 @@ export function View({
   onLocationsReady = () => {},
   onSelected = () => {},
   onPressAnnotation = () => {},
+  onPressFootnote = () => {},
   onOrientationChange = () => {},
   onLayout = () => {},
   onNavigationLoaded = () => {},
@@ -318,6 +319,12 @@ export function View({
       const { annotation } = parsedEvent;
 
       return onPressAnnotation(annotation);
+    }
+
+    if (type === 'onPressFootnote') {
+      const { innerHTML } = parsedEvent;
+
+      return onPressFootnote(innerHTML);
     }
 
     if (type === 'onAddBookmark') {

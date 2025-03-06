@@ -455,6 +455,11 @@ export interface ReaderProps {
    */
   onPressAnnotation?: (annotation: Annotation) => void;
 
+  /**
+   * Called when footnote ref is pressed
+   */
+  onPressFootnote?: (innerHTML: string) => void;
+
   initialAnnotations?: Annotation[];
 
   onAddBookmark?: (bookmark: Bookmark) => void;

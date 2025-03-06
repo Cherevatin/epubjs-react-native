@@ -320,6 +320,13 @@ export default `
         }
       });
 
+      rendition.on("footnoteClicked", function (innerHTML) {
+        reactNativeWebview.postMessage(JSON.stringify({
+          type: 'onPressFootnote',
+          innerHTML: innerHTML
+        }));
+      });
+
       rendition.on("resized", function (layout) {
         reactNativeWebview.postMessage(JSON.stringify({
           type: 'onResized',
