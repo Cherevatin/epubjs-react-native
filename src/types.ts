@@ -197,7 +197,7 @@ type FileSystem = {
 
 export interface OfflineAccess {
   fileName: string;
-  fileType: SourceType.EPUB | SourceType.OPF;
+  fileType: SourceType.EPUB;
 }
 export interface ReaderProps {
   /**
