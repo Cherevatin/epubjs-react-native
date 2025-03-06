@@ -43,6 +43,7 @@ export function Reader({
     success: downloadSuccess,
     error: downloadError,
     documentDirectory,
+    getFileInfo,
     writeAsStringAsync,
   } = useFileSystem();
   const enableSelection = menuItems ? true : rest.enableSelection || false;
@@ -76,14 +77,24 @@ export function Reader({
 
       if (src) {
         const sourceType = srcType ?? getSourceType(src);
-        const isExternalSource = isURL(src);
         const isSrcInFs = isFsUri(src);
+        const isExternalSource = isURL(src);
+        let isExternalSourceAlreadyDownloaded = false;
 
         if (!sourceType) {
           throw new Error(`Invalid source type: ${src}`);
         }
 
-        if (!isExternalSource) {
+        if (srcName && isExternalSource) {
+          const localSource = `${documentDirectory}${srcName}.${sourceType}`;
+          const localSourceInfo = await getFileInfo(localSource);
+          if (localSourceInfo.exists) {
+            isExternalSourceAlreadyDownloaded = true;
+            src = localSourceInfo.uri;
+          }
+        }
+
+        if (!isExternalSource || isExternalSourceAlreadyDownloaded) {
           if (isSrcInFs) {
             setAllowedUris(`${src}${jszipFileUri},${epubjsFileUri}`);
           }
@@ -135,13 +146,11 @@ export function Reader({
         }
 
         if (isExternalSource) {
-          const sourceName = srcName ?? getSourceName(src);
-
-          if (!sourceName) {
-            throw new Error(`Invalid source name: ${src}`);
-          }
-
-          if (sourceType === SourceType.OPF || sourceType === SourceType.EPUB) {
+          const srcContainsName = !!getSourceName(src);
+          if (
+            srcContainsName &&
+            (sourceType === SourceType.OPF || sourceType === SourceType.EPUB)
+          ) {
             setTemplate(
               injectWebViewVariables({
                 jszip: jszipFileUri,
@@ -164,6 +173,14 @@ export function Reader({
 
             setIsLoading(false);
           } else {
+            const sourceName = srcName
+              ? `${srcName}.${sourceType}`
+              : getSourceName(src);
+
+            if (!sourceName) {
+              throw new Error(`Invalid source name: ${src}`);
+            }
+
             const { uri: bookFileUri } = await downloadFile(src, sourceName);
 
             if (!bookFileUri) throw new Error("Couldn't download book");
