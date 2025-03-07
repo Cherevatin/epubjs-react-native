@@ -68,6 +68,11 @@ export type AnnotationStyles = {
   thickness?: number;
 };
 
+export type Orientation = '-90' | '0' | '90';
+export type Footnote = {
+  innerHTML: string;
+};
+
 export type Annotation<Data = any> = {
   type: AnnotationType;
   data: Data;
@@ -288,7 +293,7 @@ export interface ReaderProps {
    * @param {string} orientation
    * @returns {void} void
    */
-  onOrientationChange?: (orientation: '-90' | '0' | '90') => void;
+  onOrientationChange?: (orientation: Orientation) => void;
   /**
    * Called when the book is on the homepage
    * @returns {void} void
@@ -458,7 +463,7 @@ export interface ReaderProps {
   /**
    * Called when footnote ref is pressed
    */
-  onPressFootnote?: (innerHTML: string) => void;
+  onPressFootnote?: (footnote: Footnote) => void;
 
   initialAnnotations?: Annotation[];
 
