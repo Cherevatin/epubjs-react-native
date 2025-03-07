@@ -69,6 +69,13 @@ export type AnnotationStyles = {
   thickness?: number;
 };
 
+export type CustomMenuItemData = {
+  label: string;
+  key: string;
+  text: string;
+  cfiRange: string;
+};
+
 export type CustomMenuItem = WebViewCustomMenuItems & {
   /**
    * To keep text selection set the function return to `false`

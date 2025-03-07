@@ -1,6 +1,7 @@
 import {
   Annotation,
   Bookmark,
+  CustomMenuItemData,
   ePubCfi,
   Footnote,
   Landmark,
@@ -55,11 +56,7 @@ type EventTypeMap = {
   [EventType.OnSingleTap]: undefined;
   [EventType.OnDoubleTap]: undefined;
   [EventType.OnLongPress]: undefined;
-  [EventType.OnCustomMenuSelection]: {
-    label: string;
-    key: string;
-    selectedText: string;
-  };
+  [EventType.OnCustomMenuSelection]: CustomMenuItemData;
 };
 
 export class EventEmitter {

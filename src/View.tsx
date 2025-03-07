@@ -448,10 +448,11 @@ export function View({
     menuItems
       ?.filter((item) => item.key === event.nativeEvent.key)
       .forEach((item) => {
-        eventEmitter.trigger(
-          EventType.OnCustomMenuSelection,
-          event.nativeEvent
-        );
+        eventEmitter.trigger(EventType.OnCustomMenuSelection, {
+          ...event.nativeEvent,
+          cfiRange: selectedText.cfiRange,
+          text: selectedText.cfiRangeText,
+        });
         if (item.action) {
           const removeSelectionMenu = item.action(
             selectedText.cfiRange,
