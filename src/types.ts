@@ -1,5 +1,6 @@
 import { DimensionValue, ViewStyle } from 'react-native';
 import { SourceType } from './utils/enums/source-type.enum';
+import { WebViewCustomMenuItems } from 'react-native-webview/lib/WebViewTypes';
 
 export type PaginateOptions = {
   keepScrollOffset?: boolean;
@@ -66,6 +67,13 @@ export type AnnotationStyles = {
    * Default is: `1px`
    */
   thickness?: number;
+};
+
+export type CustomMenuItem = WebViewCustomMenuItems & {
+  /**
+   * To keep text selection set the function return to `false`
+   */
+  action?: (cfiRange: string, text: string) => boolean;
 };
 
 export type Orientation = '-90' | '0' | '90';
@@ -442,14 +450,7 @@ export interface ReaderProps {
    * These will appear after a long press to select text.
    * @platform ios, android
    */
-  menuItems?: Array<{
-    key: string;
-    label: string;
-    /**
-     * To keep text selection set the function return to `false`
-     */
-    action?: (cfiRange: string, text: string) => boolean;
-  }>;
+  menuItems?: CustomMenuItem[];
 
   onAddAnnotation?: (annotation: Annotation) => void;
 

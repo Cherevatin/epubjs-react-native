@@ -569,10 +569,7 @@ export function View({
         scrollEnabled={false}
         mixedContentMode="compatibility"
         onMessage={onMessage}
-        menuItems={menuItems?.map((item) => ({
-          label: item.label,
-          key: item.key,
-        }))}
+        menuItems={menuItems}
         onCustomMenuSelection={handleOnCustomMenuSelection}
         allowingReadAccessToURL={allowedUris}
         allowUniversalAccessFromFileURLs
