@@ -157,7 +157,7 @@ export function View({
   const onMessage = (event: WebViewMessageEvent) => {
     const parsedEvent = JSON.parse(event.nativeEvent.data);
 
-    const { type } = parsedEvent;
+    const { type }: { type: string } = parsedEvent;
 
     if (!INTERNAL_EVENTS.includes(type) && onWebViewMessage) {
       return onWebViewMessage(parsedEvent);
@@ -174,7 +174,7 @@ export function View({
       setIsRendering(true);
 
       changeTheme(defaultTheme);
-      eventEmitter.trigger(EventType.OnStarted);
+      eventEmitter.trigger(EventType.OnStarted, undefined);
       return onStarted();
     }
 
@@ -327,13 +327,13 @@ export function View({
 
     if (type === 'onBeginning') {
       setAtStart(true);
-      eventEmitter.trigger(EventType.OnBeginning);
+      eventEmitter.trigger(EventType.OnBeginning, undefined);
       return onBeginning();
     }
 
     if (type === 'onFinish') {
       setAtEnd(true);
-      eventEmitter.trigger(EventType.OnFinish);
+      eventEmitter.trigger(EventType.OnFinish, undefined);
       return onFinish();
     }
 
@@ -504,26 +504,26 @@ export function View({
       width={width}
       height={height}
       onSingleTap={() => {
-        eventEmitter.trigger(EventType.OnPress);
+        eventEmitter.trigger(EventType.OnPress, undefined);
         onPress();
-        eventEmitter.trigger(EventType.OnSingleTap);
+        eventEmitter.trigger(EventType.OnSingleTap, undefined);
         onSingleTap();
       }}
       onDoubleTap={() => {
         onDoublePress();
-        eventEmitter.trigger(EventType.OnDoubleTap);
+        eventEmitter.trigger(EventType.OnDoubleTap, undefined);
         onDoubleTap();
       }}
       onLongPress={() => {
         onLongPress();
-        eventEmitter.trigger(EventType.OnLongPress);
+        eventEmitter.trigger(EventType.OnLongPress, undefined);
       }}
       onSwipeLeft={() => {
         if (enableSwipe) {
           goNext({
             keepScrollOffset: keepScrollOffsetOnLocationChange,
           });
-          eventEmitter.trigger(EventType.OnSwipeLeft);
+          eventEmitter.trigger(EventType.OnSwipeLeft, undefined);
           onSwipeLeft();
         }
       }}
@@ -532,19 +532,19 @@ export function View({
           goPrevious({
             keepScrollOffset: keepScrollOffsetOnLocationChange,
           });
-          eventEmitter.trigger(EventType.OnSwipeRight);
+          eventEmitter.trigger(EventType.OnSwipeRight, undefined);
           onSwipeRight();
         }
       }}
       onSwipeUp={() => {
         if (enableSwipe) {
-          eventEmitter.trigger(EventType.OnSwipeUp);
+          eventEmitter.trigger(EventType.OnSwipeUp, undefined);
           onSwipeUp();
         }
       }}
       onSwipeDown={() => {
         if (enableSwipe) {
-          eventEmitter.trigger(EventType.OnSwipeDown);
+          eventEmitter.trigger(EventType.OnSwipeDown, undefined);
           onSwipeDown();
         }
       }}
