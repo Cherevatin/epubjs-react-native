@@ -24,6 +24,7 @@ import type {
   PaginateOptions,
 } from './types';
 import * as webViewInjectFunctions from './utils/webViewInjectFunctions';
+import { EventEmitter } from './utils/EventEmitter';
 
 type ActionMap<M extends { [index: string]: unknown }> = {
   [Key in keyof M]: M[Key] extends undefined
@@ -127,6 +128,7 @@ type InitialState = {
   bookmarks: Bookmark[];
   isBookmarked: boolean;
   flow: Flow;
+  eventEmitter: EventEmitter;
 };
 
 export const defaultTheme: Theme = {
@@ -186,6 +188,7 @@ const initialState: InitialState = {
   bookmarks: [],
   isBookmarked: false,
   flow: 'auto',
+  eventEmitter: new EventEmitter(),
 };
 
 function bookReducer(state: InitialState, action: BookActions): InitialState {
@@ -621,6 +624,8 @@ export interface ReaderContextProps {
    * Private
    */
   setFlow: (flow: Flow) => void;
+
+  eventEmitter: EventEmitter;
 }
 
 const ReaderContext = createContext<ReaderContextProps>({
@@ -719,6 +724,7 @@ const ReaderContext = createContext<ReaderContextProps>({
   changeFlow: () => {},
   setFlow: () => {},
   flow: 'auto',
+  eventEmitter: new EventEmitter(),
 });
 
 function ReaderProvider({ children }: { children: React.ReactNode }) {
@@ -1318,6 +1324,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       changeFlow,
       setFlow,
       flow: state.flow,
+      eventEmitter: state.eventEmitter,
     }),
     [
       changeFontFamily,
@@ -1387,6 +1394,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       changeFlow,
       setFlow,
       state.flow,
+      state.eventEmitter,
     ]
   );
   return (

@@ -6,10 +6,22 @@ import type {
   WebViewMessageEvent,
 } from 'react-native-webview/lib/WebViewTypes';
 import { defaultTheme as initialTheme, ReaderContext } from './context';
-import type { Bookmark, ReaderProps } from './types';
+import type {
+  Annotation,
+  Bookmark,
+  ePubCfi,
+  Landmark,
+  Location,
+  Orientation,
+  ReaderProps,
+  SearchResult,
+  Section,
+  Toc,
+} from './types';
 import { OpeningBook } from './utils/OpeningBook';
 import INTERNAL_EVENTS from './utils/internalEvents.util';
 import { GestureHandler } from './utils/GestureHandler';
+import { EventType } from './utils/enums/event-type.enum';
 
 export type ViewProps = Omit<ReaderProps, 'src' | 'fileSystem'> & {
   templateUri: string;
@@ -110,6 +122,7 @@ export function View({
     currentLocation: currLoc,
     setIsSearching,
     setFlow,
+    eventEmitter,
   } = useContext(ReaderContext);
   const book = useRef<WebView>(null);
   const [selectedText, setSelectedText] = useState<{
@@ -144,7 +157,7 @@ export function View({
   const onMessage = (event: WebViewMessageEvent) => {
     const parsedEvent = JSON.parse(event.nativeEvent.data);
 
-    const { type } = parsedEvent;
+    const { type }: { type: string } = parsedEvent;
 
     if (!INTERNAL_EVENTS.includes(type) && onWebViewMessage) {
       return onWebViewMessage(parsedEvent);
@@ -161,12 +174,20 @@ export function View({
       setIsRendering(true);
 
       changeTheme(defaultTheme);
-
+      eventEmitter.trigger(EventType.OnStarted, undefined);
       return onStarted();
     }
 
     if (type === 'onReady') {
-      const { totalLocations, currentLocation, progress } = parsedEvent;
+      const {
+        totalLocations,
+        currentLocation,
+        progress,
+      }: {
+        totalLocations: number;
+        currentLocation: Location;
+        progress: number;
+      } = parsedEvent;
       if (!waitForLocationsReady) {
         setIsRendering(false);
       }
@@ -182,26 +203,39 @@ export function View({
       if (injectedJavascript) {
         book.current?.injectJavaScript(injectedJavascript);
       }
-
+      eventEmitter.trigger(EventType.OnReady, {
+        totalLocations,
+        currentLocation,
+        progress,
+      });
       return onReady(totalLocations, currentLocation, progress);
     }
 
     if (type === 'onDisplayError') {
-      const { reason } = parsedEvent;
+      const { reason }: { reason: string } = parsedEvent;
       setIsRendering(false);
-
+      eventEmitter.trigger(EventType.OnDisplayError, { reason });
       return onDisplayError(reason);
     }
 
     if (type === 'onResized') {
       const { layout } = parsedEvent;
-
+      eventEmitter.trigger(EventType.OnResized, { layout });
       return onResized(layout);
     }
 
     if (type === 'onLocationChange') {
-      const { totalLocations, currentLocation, progress, currentSection } =
-        parsedEvent;
+      const {
+        totalLocations,
+        currentLocation,
+        progress,
+        currentSection,
+      }: {
+        totalLocations: number;
+        currentLocation: Location;
+        progress: number;
+        currentSection: Section | null;
+      } = parsedEvent;
       setTotalLocations(totalLocations);
       setCurrentLocation(currentLocation);
       setProgress(progress);
@@ -219,6 +253,12 @@ export function View({
         setAtStart(false);
         setAtEnd(false);
       }
+      eventEmitter.trigger(EventType.OnLocationChange, {
+        totalLocations,
+        currentLocation,
+        progress,
+        currentSection,
+      });
       return onLocationChange(
         totalLocations,
         currentLocation,
@@ -228,16 +268,29 @@ export function View({
     }
 
     if (type === 'onSearch') {
-      const { results, totalResults } = parsedEvent;
+      const {
+        results,
+        totalResults,
+      }: { results: SearchResult[]; totalResults: number } = parsedEvent;
       setSearchResults({ results, totalResults });
       setIsSearching(false);
-
+      eventEmitter.trigger(EventType.OnSearch, { results, totalResults });
       return onSearch(results, totalResults);
     }
 
     if (type === 'onLocationsReady') {
-      const { epubKey, totalLocations, currentLocation, progress } =
-        parsedEvent;
+      const {
+        epubKey,
+        totalLocations,
+        currentLocation,
+        progress,
+      }: {
+        epubKey: string;
+        locations: ePubCfi[];
+        totalLocations: number;
+        currentLocation: Location;
+        progress: number;
+      } = parsedEvent;
       setLocations(parsedEvent.locations);
       setKey(epubKey);
       setTotalLocations(totalLocations);
@@ -247,121 +300,138 @@ export function View({
       if (waitForLocationsReady) {
         setIsRendering(false);
       }
-
+      eventEmitter.trigger(EventType.OnLocationsReady, {
+        epubKey,
+        locations: parsedEvent.locations,
+      });
       return onLocationsReady(epubKey, parsedEvent.locations);
     }
 
     if (type === 'onSelected') {
-      const { cfiRange, text } = parsedEvent;
-
+      const { cfiRange, text }: { text: string; cfiRange: ePubCfi } =
+        parsedEvent;
       setSelectedText({ cfiRange, cfiRangeText: text });
+      eventEmitter.trigger(EventType.OnSelected, { text, cfiRange });
       return onSelected(text, cfiRange);
     }
 
     if (type === 'onOrientationChange') {
-      const { orientation } = parsedEvent;
-
+      const {
+        orientation,
+      }: {
+        orientation: Orientation;
+      } = parsedEvent;
+      eventEmitter.trigger(EventType.OnOrientationChange, orientation);
       return onOrientationChange(orientation);
     }
 
     if (type === 'onBeginning') {
       setAtStart(true);
-
+      eventEmitter.trigger(EventType.OnBeginning, undefined);
       return onBeginning();
     }
 
     if (type === 'onFinish') {
       setAtEnd(true);
-
+      eventEmitter.trigger(EventType.OnFinish, undefined);
       return onFinish();
     }
 
     if (type === 'onRendered') {
       const { currentSection } = parsedEvent;
-
       return onRendered(parsedEvent.section, currentSection);
     }
 
     if (type === 'onLayout') {
       const { layout } = parsedEvent;
-
+      eventEmitter.trigger(EventType.OnLayout, { layout });
       return onLayout(layout);
     }
 
     if (type === 'onNavigationLoaded') {
-      const { toc, landmarks } = parsedEvent;
-
+      const { toc, landmarks }: { toc: Toc; landmarks: Landmark[] } =
+        parsedEvent;
       setToc(toc);
       setLandmarks(landmarks);
-
+      eventEmitter.trigger(EventType.OnNavigationLoaded, { toc, landmarks });
       return onNavigationLoaded({ toc, landmarks });
     }
 
     if (type === 'onAddAnnotation') {
-      const { annotation } = parsedEvent;
-
+      const { annotation }: { annotation: Annotation } = parsedEvent;
+      eventEmitter.trigger(EventType.OnAddAnnotation, annotation);
       return onAddAnnotation(annotation);
     }
 
     if (type === 'onChangeAnnotations') {
-      const { annotations } = parsedEvent;
+      const { annotations }: { annotations: Annotation[] } = parsedEvent;
       setAnnotations(annotations);
+      eventEmitter.trigger(EventType.OnChangeAnnotations, annotations);
       return onChangeAnnotations(annotations);
     }
 
     if (type === 'onSetInitialAnnotations') {
-      const { annotations } = parsedEvent;
+      const { annotations }: { annotations: Annotation[] } = parsedEvent;
       setAnnotations(annotations);
       return () => {};
     }
 
     if (type === 'onPressAnnotation') {
-      const { annotation } = parsedEvent;
-
+      const { annotation }: { annotation: Annotation } = parsedEvent;
+      eventEmitter.trigger(EventType.OnPressAnnotation, annotation);
       return onPressAnnotation(annotation);
     }
 
     if (type === 'onPressFootnote') {
-      const { innerHTML } = parsedEvent;
-
-      return onPressFootnote(innerHTML);
+      const { innerHTML }: { innerHTML: string } = parsedEvent;
+      eventEmitter.trigger(EventType.OnPressFootnote, { innerHTML });
+      return onPressFootnote({ innerHTML });
     }
 
     if (type === 'onAddBookmark') {
-      const { bookmark } = parsedEvent;
+      const { bookmark }: { bookmark: Bookmark } = parsedEvent;
 
       setBookmarks([...bookmarks, bookmark]);
+      eventEmitter.trigger(EventType.OnAddBookmark, bookmark);
       onAddBookmark(bookmark);
       handleChangeIsBookmarked([...bookmarks, bookmark]);
+      eventEmitter.trigger(EventType.OnChangeBookmarks, [
+        ...bookmarks,
+        bookmark,
+      ]);
       return onChangeBookmarks([...bookmarks, bookmark]);
     }
 
     if (type === 'onRemoveBookmark') {
-      const { bookmark } = parsedEvent;
+      const { bookmark }: { bookmark: Bookmark } = parsedEvent;
 
       onRemoveBookmark(bookmark);
-      handleChangeIsBookmarked(
-        bookmarks.filter(({ id }) => id !== bookmark.id)
+      eventEmitter.trigger(EventType.OnRemoveBookmark, bookmark);
+      const filteredBookmarks = bookmarks.filter(
+        ({ id }) => id !== bookmark.id
       );
-      return onChangeBookmarks(
-        bookmarks.filter(({ id }) => id !== bookmark.id)
-      );
+      handleChangeIsBookmarked(filteredBookmarks);
+      eventEmitter.trigger(EventType.OnChangeBookmarks, filteredBookmarks);
+      return onChangeBookmarks(filteredBookmarks);
     }
 
     if (type === 'onRemoveBookmarks') {
       handleChangeIsBookmarked([]);
+      eventEmitter.trigger(EventType.OnChangeBookmarks, []);
       return onChangeBookmarks([]);
     }
 
     if (type === 'onUpdateBookmark') {
-      const { bookmark } = parsedEvent;
+      const { bookmark }: { bookmark: Bookmark } = parsedEvent;
       const Bookmarks = bookmarks;
 
       const index = Bookmarks.findIndex((item) => item.id === bookmark.id);
       Bookmarks[index] = bookmark;
 
       onUpdateBookmark(bookmark);
+      eventEmitter.trigger(EventType.OnUpdateBookmark, bookmark);
       handleChangeIsBookmarked(Bookmarks);
+      eventEmitter.trigger(EventType.OnChangeBookmarks, Bookmarks);
       return onChangeBookmarks(Bookmarks);
     }
 
@@ -375,18 +445,27 @@ export function View({
       selectedText: string;
     };
   }) => {
-    menuItems?.forEach((item) => {
-      if (event.nativeEvent.label === item.label) {
-        const removeSelectionMenu = item.action(
-          selectedText.cfiRange,
-          selectedText.cfiRangeText
-        );
+    menuItems
+      ?.filter((item) => item.key === event.nativeEvent.key)
+      .forEach((item) => {
+        eventEmitter.trigger(EventType.OnCustomMenuSelection, {
+          ...event.nativeEvent,
+          cfiRange: selectedText.cfiRange,
+          text: selectedText.cfiRangeText,
+        });
+        if (item.action) {
+          const removeSelectionMenu = item.action(
+            selectedText.cfiRange,
+            selectedText.cfiRangeText
+          );
 
-        if (removeSelectionMenu) {
-          removeSelection();
+          if (removeSelectionMenu) {
+            removeSelection();
+          }
+          return;
         }
-      }
-    });
+        removeSelection();
+      });
   };
 
   const handleOnShouldStartLoadWithRequest = (
@@ -425,19 +504,26 @@ export function View({
       width={width}
       height={height}
       onSingleTap={() => {
+        eventEmitter.trigger(EventType.OnPress, undefined);
         onPress();
+        eventEmitter.trigger(EventType.OnSingleTap, undefined);
         onSingleTap();
       }}
       onDoubleTap={() => {
         onDoublePress();
+        eventEmitter.trigger(EventType.OnDoubleTap, undefined);
         onDoubleTap();
       }}
-      onLongPress={onLongPress}
+      onLongPress={() => {
+        onLongPress();
+        eventEmitter.trigger(EventType.OnLongPress, undefined);
+      }}
       onSwipeLeft={() => {
         if (enableSwipe) {
           goNext({
             keepScrollOffset: keepScrollOffsetOnLocationChange,
           });
+          eventEmitter.trigger(EventType.OnSwipeLeft, undefined);
           onSwipeLeft();
         }
       }}
@@ -446,16 +532,19 @@ export function View({
           goPrevious({
             keepScrollOffset: keepScrollOffsetOnLocationChange,
           });
+          eventEmitter.trigger(EventType.OnSwipeRight, undefined);
           onSwipeRight();
         }
       }}
       onSwipeUp={() => {
         if (enableSwipe) {
+          eventEmitter.trigger(EventType.OnSwipeUp, undefined);
           onSwipeUp();
         }
       }}
       onSwipeDown={() => {
         if (enableSwipe) {
+          eventEmitter.trigger(EventType.OnSwipeDown, undefined);
           onSwipeDown();
         }
       }}
@@ -481,10 +570,7 @@ export function View({
         scrollEnabled={false}
         mixedContentMode="compatibility"
         onMessage={onMessage}
-        menuItems={menuItems?.map((item, key) => ({
-          label: item.label,
-          key: key.toString(),
-        }))}
+        menuItems={menuItems}
         onCustomMenuSelection={handleOnCustomMenuSelection}
         allowingReadAccessToURL={allowedUris}
         allowUniversalAccessFromFileURLs

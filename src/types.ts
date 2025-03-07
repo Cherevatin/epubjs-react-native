@@ -1,5 +1,6 @@
 import { DimensionValue, ViewStyle } from 'react-native';
 import { SourceType } from './utils/enums/source-type.enum';
+import { WebViewCustomMenuItems } from 'react-native-webview/lib/WebViewTypes';
 
 export type PaginateOptions = {
   keepScrollOffset?: boolean;
@@ -66,6 +67,25 @@ export type AnnotationStyles = {
    * Default is: `1px`
    */
   thickness?: number;
+};
+
+export type CustomMenuItemData = {
+  label: string;
+  key: string;
+  text: string;
+  cfiRange: string;
+};
+
+export type CustomMenuItem = WebViewCustomMenuItems & {
+  /**
+   * To keep text selection set the function return to `false`
+   */
+  action?: (cfiRange: string, text: string) => boolean;
+};
+
+export type Orientation = '-90' | '0' | '90';
+export type Footnote = {
+  innerHTML: string;
 };
 
 export type Annotation<Data = any> = {
@@ -288,7 +308,7 @@ export interface ReaderProps {
    * @param {string} orientation
    * @returns {void} void
    */
-  onOrientationChange?: (orientation: '-90' | '0' | '90') => void;
+  onOrientationChange?: (orientation: Orientation) => void;
   /**
    * Called when the book is on the homepage
    * @returns {void} void
@@ -437,14 +457,7 @@ export interface ReaderProps {
    * These will appear after a long press to select text.
    * @platform ios, android
    */
-  menuItems?: Array<{
-    key?: string;
-    label: string;
-    /**
-     * To keep text selection set the function return to `false`
-     */
-    action: (cfiRange: string, text: string) => boolean;
-  }>;
+  menuItems?: CustomMenuItem[];
 
   onAddAnnotation?: (annotation: Annotation) => void;
 
@@ -458,7 +471,7 @@ export interface ReaderProps {
   /**
    * Called when footnote ref is pressed
    */
-  onPressFootnote?: (innerHTML: string) => void;
+  onPressFootnote?: (footnote: Footnote) => void;
 
   initialAnnotations?: Annotation[];
 
