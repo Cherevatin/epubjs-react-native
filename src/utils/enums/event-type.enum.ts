@@ -7,6 +7,7 @@ export enum EventType {
   OnSearch = 'onSearch',
   OnLocationsReady = 'onLocationsReady',
   OnSelected = 'onSelected',
+  OnUnselected = 'onUnselected',
   OnOrientationChange = 'onOrientationChange',
   OnBeginning = 'onBeginning',
   OnFinish = 'onFinish',
