@@ -443,12 +443,12 @@ export interface ReaderProps {
    * @platform ios, android
    */
   menuItems?: Array<{
-    key?: string;
+    key: string;
     label: string;
     /**
      * To keep text selection set the function return to `false`
      */
-    action: (cfiRange: string, text: string) => boolean;
+    action?: (cfiRange: string, text: string) => boolean;
   }>;
 
   onAddAnnotation?: (annotation: Annotation) => void;

@@ -445,18 +445,26 @@ export function View({
       selectedText: string;
     };
   }) => {
-    menuItems?.forEach((item) => {
-      if (event.nativeEvent.label === item.label) {
-        const removeSelectionMenu = item.action(
-          selectedText.cfiRange,
-          selectedText.cfiRangeText
+    menuItems
+      ?.filter((item) => item.key === event.nativeEvent.key)
+      .forEach((item) => {
+        eventEmitter.trigger(
+          EventType.OnCustomMenuSelection,
+          event.nativeEvent
         );
+        if (item.action) {
+          const removeSelectionMenu = item.action(
+            selectedText.cfiRange,
+            selectedText.cfiRangeText
+          );
 
-        if (removeSelectionMenu) {
-          removeSelection();
+          if (removeSelectionMenu) {
+            removeSelection();
+          }
+          return;
         }
-      }
-    });
+        removeSelection();
+      });
   };
 
   const handleOnShouldStartLoadWithRequest = (
@@ -561,9 +569,9 @@ export function View({
         scrollEnabled={false}
         mixedContentMode="compatibility"
         onMessage={onMessage}
-        menuItems={menuItems?.map((item, key) => ({
+        menuItems={menuItems?.map((item) => ({
           label: item.label,
-          key: key.toString(),
+          key: item.key,
         }))}
         onCustomMenuSelection={handleOnCustomMenuSelection}
         allowingReadAccessToURL={allowedUris}
