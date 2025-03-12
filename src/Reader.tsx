@@ -220,7 +220,6 @@ export function Reader({
   }, [
     allowPopups,
     allowScriptedContent,
-    defaultTheme,
     documentDirectory,
     downloadFile,
     enableSelection,
