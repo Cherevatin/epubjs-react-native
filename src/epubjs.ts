@@ -4066,6 +4066,7 @@ export default `
             (this.element = n.default.createElement("svg")),
             (this.marks = []),
             (this.element.style.position = "absolute"),
+            (this.element.style.mixBlendMode  = "multiply"),
             this.element.setAttribute("pointer-events", "none"),
             r.default.proxyMouse(this.target, this.marks),
             (this.container = e),
