@@ -308,6 +308,12 @@ export default `
         });
       });
 
+      rendition.on("unselected", function () {
+        reactNativeWebview.postMessage(JSON.stringify({
+          type: 'onUnselected'
+        }));
+      });
+
       rendition.on("markClicked", function (cfiRange, contents) {
         const annotations = Object.values(rendition.annotations._annotations);
         const annotation = annotations.find(item => item.cfiRange === cfiRange);

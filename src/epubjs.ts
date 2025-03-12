@@ -640,6 +640,7 @@ export default `
             RESIZE: "resize",
             SELECTED: "selected",
             SELECTED_RANGE: "selectedRange",
+            UNSELECTED: "unselected",
             LINK_CLICKED: "linkClicked",
             FOOTNOTE_CLICKED: "footnoteClicked",
           },
@@ -677,6 +678,7 @@ export default `
             RELOCATED: "relocated",
             MARK_CLICKED: "markClicked",
             SELECTED: "selected",
+            UNSELECTED: "unselected",
             LAYOUT: "layout",
             FOOTNOTE_CLICKED: "footnoteClicked",
           },
@@ -3896,12 +3898,24 @@ export default `
         }
         triggerSelectedEvent(t) {
           var e, i;
-          t &&
-            t.rangeCount > 0 &&
-            ((e = t.getRangeAt(0)).collapsed ||
-              ((i = new o.a(e, this.cfiBase).toString()),
-              this.emit(l.c.CONTENTS.SELECTED, i),
-              this.emit(l.c.CONTENTS.SELECTED_RANGE, e)));
+          if (t) {
+            if(t.rangeCount > 0){
+              e = t.getRangeAt(0);
+              if (e.collapsed && this.lastSelection) {
+                this.lastSelection = null;
+                this.emit(l.c.CONTENTS.UNSELECTED);
+              } else if (!e.collapsed) {
+                this.lastSelection = e;
+                i = new o.a(e, this.cfiBase).toString();
+                this.emit(l.c.CONTENTS.SELECTED, i);
+                this.emit(l.c.CONTENTS.SELECTED_RANGE, e);
+              }
+            }
+            else if (this.lastSelection){
+              this.lastSelection = null;
+              this.emit(l.c.CONTENTS.UNSELECTED);
+            }
+          }
         }
         range(t, e) {
           return new o.a(t).toRange(this.document, e);
@@ -5178,12 +5192,16 @@ export default `
             t.on(e, (e) => this.triggerViewEvent(e, t));
           }),
             t.on(l.c.CONTENTS.SELECTED, (e) => this.triggerSelectedEvent(e, t));
+            t.on(l.c.CONTENTS.UNSELECTED, (e) => this.triggerUnselectedEvent());
         }
         triggerViewEvent(t, e) {
           this.emit(t.type, t, e);
         }
         triggerSelectedEvent(t, e) {
           this.emit(l.c.RENDITION.SELECTED, t, e);
+        }
+        triggerUnselectedEvent() {
+          this.emit(l.c.RENDITION.UNSELECTED);
         }
         triggerMarkEvent(t, e, i) {
           this.emit(l.c.RENDITION.MARK_CLICKED, t, e, i);

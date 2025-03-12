@@ -40,6 +40,7 @@ export function View({
   onSearch = () => {},
   onLocationsReady = () => {},
   onSelected = () => {},
+  onUnselected = () => {},
   onPressAnnotation = () => {},
   onPressFootnote = () => {},
   onOrientationChange = () => {},
@@ -313,6 +314,11 @@ export function View({
       setSelectedText({ cfiRange, cfiRangeText: text });
       eventEmitter.trigger(EventType.OnSelected, { text, cfiRange });
       return onSelected(text, cfiRange);
+    }
+
+    if (type === 'onUnselected') {
+      eventEmitter.trigger(EventType.OnUnselected, undefined);
+      return onUnselected();
     }
 
     if (type === 'onOrientationChange') {

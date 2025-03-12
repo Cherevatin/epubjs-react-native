@@ -8,6 +8,7 @@ const INTERNAL_EVENTS = [
   'onSearch',
   'onLocationsReady',
   'onSelected',
+  'onUnselected',
   'onOrientationChange',
   'onBeginning',
   'onFinish',
