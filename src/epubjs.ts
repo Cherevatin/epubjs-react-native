@@ -3898,14 +3898,22 @@ export default `
         }
         triggerSelectedEvent(t) {
           var e, i;
-          if (t && t.rangeCount > 0) {
-            e = t.getRangeAt(0);
-            if (e.collapsed) {
+          if (t) {
+            if(t.rangeCount > 0){
+              e = t.getRangeAt(0);
+              if (e.collapsed && this.lastSelection) {
+                this.lastSelection = null;
+                this.emit(l.c.CONTENTS.UNSELECTED);
+              } else if (!e.collapsed) {
+                this.lastSelection = e;
+                i = new o.a(e, this.cfiBase).toString();
+                this.emit(l.c.CONTENTS.SELECTED, i);
+                this.emit(l.c.CONTENTS.SELECTED_RANGE, e);
+              }
+            }
+            else if (this.lastSelection){
+              this.lastSelection = null;
               this.emit(l.c.CONTENTS.UNSELECTED);
-            } else {
-              i = new o.a(e, this.cfiBase).toString();
-              this.emit(l.c.CONTENTS.SELECTED, i);
-              this.emit(l.c.CONTENTS.SELECTED_RANGE, e);
             }
           }
         }
