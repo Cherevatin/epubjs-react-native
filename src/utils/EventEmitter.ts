@@ -34,6 +34,7 @@ type EventTypeMap = {
     locations: ePubCfi[];
   };
   [EventType.OnSelected]: { text: string; cfiRange: ePubCfi };
+  [EventType.OnUnselected]: undefined;
   [EventType.OnOrientationChange]: Orientation;
   [EventType.OnBeginning]: undefined;
   [EventType.OnFinish]: undefined;
