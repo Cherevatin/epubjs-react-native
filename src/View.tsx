@@ -44,6 +44,7 @@ export function View({
   onPressAnnotation = () => {},
   onPressFootnote = () => {},
   onOrientationChange = () => {},
+  onScroll = () => {},
   onLayout = () => {},
   onNavigationLoaded = () => {},
   onBeginning = () => {},
@@ -352,6 +353,12 @@ export function View({
       const { layout } = parsedEvent;
       eventEmitter.trigger(EventType.OnLayout, { layout });
       return onLayout(layout);
+    }
+
+    if (type === 'onScroll') {
+      const { scrollX, scrollY } = parsedEvent;
+      eventEmitter.trigger(EventType.OnScroll, { scrollX, scrollY });
+      return onScroll({ scrollX, scrollY });
     }
 
     if (type === 'onNavigationLoaded') {

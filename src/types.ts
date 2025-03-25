@@ -83,6 +83,11 @@ export type CustomMenuItem = WebViewCustomMenuItems & {
   action?: (cfiRange: string, text: string) => boolean;
 };
 
+export type ScrollEvent = {
+  scrollX: number;
+  scrollY: number;
+};
+
 export type Orientation = '-90' | '0' | '90';
 export type Footnote = {
   innerHTML: string;
@@ -310,6 +315,7 @@ export interface ReaderProps {
    * @returns {void} void
    */
   onOrientationChange?: (orientation: Orientation) => void;
+  onScroll?: (scroll: ScrollEvent) => void;
   /**
    * Called when the book is on the homepage
    * @returns {void} void

@@ -7,6 +7,7 @@ import {
   Landmark,
   Location,
   Orientation,
+  ScrollEvent,
   SearchResult,
   Section,
   Toc,
@@ -58,6 +59,7 @@ type EventTypeMap = {
   [EventType.OnDoubleTap]: undefined;
   [EventType.OnLongPress]: undefined;
   [EventType.OnCustomMenuSelection]: CustomMenuItemData;
+  [EventType.OnScroll]: ScrollEvent;
 };
 
 export class EventEmitter {

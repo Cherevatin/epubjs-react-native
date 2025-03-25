@@ -20,6 +20,7 @@ const INTERNAL_EVENTS = [
   'onSetInitialAnnotations',
   'onPressAnnotation',
   'onPressFootnote',
+  'onScroll',
   'onAddBookmark',
   'onRemoveBookmark',
   'onRemoveBookmarks',

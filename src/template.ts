@@ -296,6 +296,14 @@ export default `
         }));
       });
 
+      rendition.on("scroll", function (event) {
+        reactNativeWebview.postMessage(JSON.stringify({
+          type: 'onScroll',
+          scrollX: event.left,
+          scrollY: event.top,
+        }));
+      });
+
       rendition.on("selected", function (cfiRange, contents) {
         book.getRange(cfiRange).then(function (range) {
           if (range) {
