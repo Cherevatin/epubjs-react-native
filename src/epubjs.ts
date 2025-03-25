@@ -680,6 +680,7 @@ export default `
             SELECTED: "selected",
             UNSELECTED: "unselected",
             LAYOUT: "layout",
+            SCROLL: "scroll",
             FOOTNOTE_CLICKED: "footnoteClicked",
           },
           LAYOUT: { UPDATED: "updated" },
@@ -4916,6 +4917,10 @@ export default `
               l.c.MANAGERS.SCROLLED,
               this.reportLocation.bind(this),
             ),
+            this.manager.on(
+              l.c.MANAGERS.SCROLL,
+              (e) => this.emit(l.c.RENDITION.SCROLL, e),
+            ),
             this.emit(l.c.RENDITION.STARTED),
             this.starting.resolve();
         }
@@ -6716,7 +6721,18 @@ export default `
             ? ((t = window.scrollY * i), (e = window.scrollX * i))
             : ((t = this.container.scrollTop), (e = this.container.scrollLeft)),
             (this.scrollTop = t),
-            (this.scrollLeft = e),
+            (this.scrollLeft = e);
+            if(!this.isScrolling){
+              this.isScrolling = true;
+              this.emit(s.c.MANAGERS.SCROLL, {
+                top: this.scrollTop,
+                left: this.scrollLeft,
+              }),
+              clearTimeout(this.scrollingTimeout);
+              this.scrollingTimeout = setTimeout(() => {
+                this.isScrolling = false;
+              }, 100);
+            }
             this.ignore ? (this.ignore = !1) : this._scrolled(),
             (this.scrollDeltaVert += Math.abs(t - this.prevScrollTop)),
             (this.scrollDeltaHorz += Math.abs(e - this.prevScrollLeft)),
@@ -6738,10 +6754,6 @@ export default `
               return this.check();
             }.bind(this),
           ),
-            this.emit(s.c.MANAGERS.SCROLL, {
-              top: this.scrollTop,
-              left: this.scrollLeft,
-            }),
             clearTimeout(this.afterScrolled),
             (this.afterScrolled = setTimeout(
               function () {

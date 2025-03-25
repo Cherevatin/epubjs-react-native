@@ -69,7 +69,7 @@ export type AnnotationStyles = {
   thickness?: number;
 };
 
-export type CustomMenuItemData = {
+export type CustomMenuSelectionEvent = {
   label: string;
   key: string;
   text: string;
@@ -81,6 +81,52 @@ export type CustomMenuItem = WebViewCustomMenuItems & {
    * To keep text selection set the function return to `false`
    */
   action?: (cfiRange: string, text: string) => boolean;
+};
+
+export type DisplayErrorEvent = {
+  reason: string;
+};
+
+export type ScrollEvent = {
+  scrollX: number;
+  scrollY: number;
+};
+
+export type SelectedEvent = {
+  text: string;
+  cfiRange: ePubCfi;
+};
+
+export type LayoutEvent = {
+  layout: any;
+};
+
+export type SearchEvent = {
+  results: SearchResult[];
+  totalResults: number;
+};
+
+export type LocationChangeEvent = {
+  totalLocations: number;
+  currentLocation: Location;
+  progress: number;
+  currentSection: Section | null;
+};
+
+export type ReadyEvent = {
+  totalLocations: number;
+  currentLocation: Location;
+  progress: number;
+};
+
+export type LocationsReadyEvent = {
+  epubKey: string;
+  locations: ePubCfi[];
+};
+
+export type NavigationLoadedEvent = {
+  toc: Toc;
+  landmarks: Landmark[];
 };
 
 export type Orientation = '-90' | '0' | '90';
@@ -310,6 +356,7 @@ export interface ReaderProps {
    * @returns {void} void
    */
   onOrientationChange?: (orientation: Orientation) => void;
+  onScroll?: (scroll: ScrollEvent) => void;
   /**
    * Called when the book is on the homepage
    * @returns {void} void
