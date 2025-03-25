@@ -69,7 +69,7 @@ export type AnnotationStyles = {
   thickness?: number;
 };
 
-export type CustomMenuItemData = {
+export type CustomMenuSelectionEvent = {
   label: string;
   key: string;
   text: string;
@@ -83,9 +83,50 @@ export type CustomMenuItem = WebViewCustomMenuItems & {
   action?: (cfiRange: string, text: string) => boolean;
 };
 
+export type DisplayErrorEvent = {
+  reason: string;
+};
+
 export type ScrollEvent = {
   scrollX: number;
   scrollY: number;
+};
+
+export type SelectedEvent = {
+  text: string;
+  cfiRange: ePubCfi;
+};
+
+export type LayoutEvent = {
+  layout: any;
+};
+
+export type SearchEvent = {
+  results: SearchResult[];
+  totalResults: number;
+};
+
+export type LocationChangeEvent = {
+  totalLocations: number;
+  currentLocation: Location;
+  progress: number;
+  currentSection: Section | null;
+};
+
+export type ReadyEvent = {
+  totalLocations: number;
+  currentLocation: Location;
+  progress: number;
+};
+
+export type LocationsReadyEvent = {
+  epubKey: string;
+  locations: ePubCfi[];
+};
+
+export type NavigationLoadedEvent = {
+  toc: Toc;
+  landmarks: Landmark[];
 };
 
 export type Orientation = '-90' | '0' | '90';

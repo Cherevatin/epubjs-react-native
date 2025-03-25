@@ -1,46 +1,34 @@
-import {
-  Annotation,
-  Bookmark,
-  CustomMenuItemData,
-  ePubCfi,
-  Footnote,
-  Landmark,
-  Location,
-  Orientation,
-  ScrollEvent,
-  SearchResult,
-  Section,
-  Toc,
-} from 'src/types';
+import type { Orientation } from 'src/types';
+import type { ReadyEvent } from 'src/types';
+import type { NavigationLoadedEvent } from 'src/types';
+import type { LocationsReadyEvent } from 'src/types';
+import type { LayoutEvent } from 'src/types';
+import type { SearchEvent } from 'src/types';
+import type { LocationChangeEvent } from 'src/types';
+import type { Annotation } from 'src/types';
+import type { Footnote } from 'src/types';
+import type { CustomMenuSelectionEvent } from 'src/types';
+import type { Bookmark } from 'src/types';
+import type { ScrollEvent } from 'src/types';
+import type { SelectedEvent } from 'src/types';
+import type { DisplayErrorEvent } from 'src/types';
 import { EventType } from './enums/event-type.enum';
 
-type EventTypeMap = {
-  [EventType.OnStarted]: undefined;
-  [EventType.OnReady]: {
-    totalLocations: number;
-    currentLocation: Location;
-    progress: number;
-  };
-  [EventType.OnDisplayError]: { reason: string };
-  [EventType.OnResized]: { layout: any };
-  [EventType.OnLocationChange]: {
-    totalLocations: number;
-    currentLocation: Location;
-    progress: number;
-    currentSection: Section | null;
-  };
-  [EventType.OnSearch]: { results: SearchResult[]; totalResults: number };
-  [EventType.OnLocationsReady]: {
-    epubKey: string;
-    locations: ePubCfi[];
-  };
-  [EventType.OnSelected]: { text: string; cfiRange: ePubCfi };
-  [EventType.OnUnselected]: undefined;
+export type EventPayloadByEvent = {
+  [EventType.OnStarted]: never;
+  [EventType.OnReady]: ReadyEvent;
+  [EventType.OnDisplayError]: DisplayErrorEvent;
+  [EventType.OnResized]: LayoutEvent;
+  [EventType.OnLocationChange]: LocationChangeEvent;
+  [EventType.OnSearch]: SearchEvent;
+  [EventType.OnLocationsReady]: LocationsReadyEvent;
+  [EventType.OnSelected]: SelectedEvent;
+  [EventType.OnUnselected]: never;
   [EventType.OnOrientationChange]: Orientation;
-  [EventType.OnBeginning]: undefined;
-  [EventType.OnFinish]: undefined;
-  [EventType.OnLayout]: { layout: any };
-  [EventType.OnNavigationLoaded]: { toc: Toc; landmarks: Landmark[] };
+  [EventType.OnBeginning]: never;
+  [EventType.OnFinish]: never;
+  [EventType.OnLayout]: LayoutEvent;
+  [EventType.OnNavigationLoaded]: NavigationLoadedEvent;
   [EventType.OnAddAnnotation]: Annotation;
   [EventType.OnPressAnnotation]: Annotation;
   [EventType.OnChangeAnnotations]: Annotation[];
@@ -50,37 +38,43 @@ type EventTypeMap = {
   [EventType.OnRemoveBookmark]: Bookmark;
   [EventType.OnUpdateBookmark]: Bookmark;
   [EventType.OnRemoveBookmark]: Bookmark;
-  [EventType.OnSwipeLeft]: undefined;
-  [EventType.OnSwipeRight]: undefined;
-  [EventType.OnSwipeUp]: undefined;
-  [EventType.OnSwipeDown]: undefined;
-  [EventType.OnPress]: undefined;
-  [EventType.OnSingleTap]: undefined;
-  [EventType.OnDoubleTap]: undefined;
-  [EventType.OnLongPress]: undefined;
-  [EventType.OnCustomMenuSelection]: CustomMenuItemData;
+  [EventType.OnSwipeLeft]: never;
+  [EventType.OnSwipeRight]: never;
+  [EventType.OnSwipeUp]: never;
+  [EventType.OnSwipeDown]: never;
+  [EventType.OnPress]: never;
+  [EventType.OnSingleTap]: never;
+  [EventType.OnDoubleTap]: never;
+  [EventType.OnLongPress]: never;
+  [EventType.OnCustomMenuSelection]: CustomMenuSelectionEvent;
   [EventType.OnScroll]: ScrollEvent;
 };
 
 export class EventEmitter {
   private listeners: {
-    [K in keyof EventTypeMap]?: Array<(data: EventTypeMap[K]) => void>;
+    [K in keyof EventPayloadByEvent]?: Array<
+      EventPayloadByEvent[K] extends never
+        ? () => void
+        : (event: EventPayloadByEvent[K]) => void
+    >;
   } = {};
 
-  addListener<K extends keyof EventTypeMap>(
+  addListener<K extends keyof EventPayloadByEvent>(
     event: K,
-    callback: (data: EventTypeMap[K]) => void
+    listener: EventPayloadByEvent[K] extends never
+      ? () => void
+      : (event: EventPayloadByEvent[K]) => void
   ) {
     if (!this.listeners[event]) {
       this.listeners[event] = [];
     }
-    this.listeners[event]!.push(callback);
+    this.listeners[event]!.push(listener);
     return () => {
       if (this.listeners[event]) {
-        const callbacks = this.listeners[event].slice();
+        const listeners = this.listeners[event].slice();
         this.listeners[event] = [];
-        callbacks
-          .filter((cb) => cb !== callback)
+        listeners
+          .filter((l) => l !== listener)
           .forEach((i) => {
             this.listeners[event]!.push(i);
           });
@@ -88,9 +82,14 @@ export class EventEmitter {
     };
   }
 
-  trigger<K extends keyof EventTypeMap>(event: K, data: EventTypeMap[K]) {
-    this.listeners[event]?.forEach((callback) =>
-      callback(data as EventTypeMap[K])
-    );
+  trigger<K extends keyof EventPayloadByEvent>(
+    event: K,
+    ...args: EventPayloadByEvent[K] extends never
+      ? never[]
+      : [EventPayloadByEvent[K]]
+  ) {
+    this.listeners[event]?.forEach((listener) => {
+      listener(args[0] as EventPayloadByEvent[K]);
+    });
   }
 }
