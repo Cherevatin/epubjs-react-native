@@ -632,6 +632,7 @@ export default `
           "touchend",
           "touchstart",
           "touchmove",
+          "dblclick",
         ],
         s = {
           BOOK: { OPEN_FAILED: "openFailed" },

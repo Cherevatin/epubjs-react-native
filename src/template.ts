@@ -304,6 +304,18 @@ export default `
         }));
       });
 
+      rendition.on("dblclick", function (layout) {
+        reactNativeWebview.postMessage(JSON.stringify({
+          type: 'onDoubleTap',
+        }));
+      });
+
+      rendition.on("click", function (layout) {
+        reactNativeWebview.postMessage(JSON.stringify({
+          type: 'onSingleTap',
+        }));
+      });
+
       rendition.on("selected", function (cfiRange, contents) {
         book.getRange(cfiRange).then(function (range) {
           if (range) {

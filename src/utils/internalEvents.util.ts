@@ -1,3 +1,5 @@
+import { EventType } from "./enums/event-type.enum";
+
 const INTERNAL_EVENTS = [
   'meta',
   'onStarted',
@@ -25,6 +27,8 @@ const INTERNAL_EVENTS = [
   'onRemoveBookmark',
   'onRemoveBookmarks',
   'onUpdateBookmark',
+  EventType.OnDoubleTap,
+  EventType.OnSingleTap
 ];
 
 export default INTERNAL_EVENTS;
