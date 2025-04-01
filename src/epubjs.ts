@@ -2984,20 +2984,27 @@ export default `
             ? ((t = window.scrollY), (e = window.scrollX))
             : ((t = this.container.scrollTop), (e = this.container.scrollLeft)),
             (this.scrollTop = t),
-            (this.scrollLeft = e),
-            this.ignore
-              ? (this.ignore = !1)
-              : (this.emit(f.c.MANAGERS.SCROLL, { top: t, left: e }),
-                clearTimeout(this.afterScrolled),
-                (this.afterScrolled = setTimeout(
-                  function () {
-                    this.emit(f.c.MANAGERS.SCROLLED, {
-                      top: this.scrollTop,
-                      left: this.scrollLeft,
-                    });
-                  }.bind(this),
-                  20,
-                )));
+            (this.scrollLeft = e);
+            if(!this.ignore) {
+              if(!this.isScrolling) {
+                this.isScrolling = true;
+                this.emit(f.c.MANAGERS.SCROLL, { top: t, left: e });
+                clearTimeout(this.scrollingTimeout);
+                this.scrollingTimeout = setTimeout(() => {
+                  this.isScrolling = false;
+                }, 125);
+
+                clearTimeout(this.afterScrolled);
+                this.afterScrolled = setTimeout(function () {
+                  this.emit(EVENTS.MANAGERS.SCROLLED, {
+                    top: this.scrollTop,
+                    left: this.scrollLeft
+                  });
+                }.bind(this), 20);
+              }
+            } else {
+              this.ignore = false;
+            }
         }
         bounds() {
           return this.stage.bounds();
@@ -6731,7 +6738,7 @@ export default `
               clearTimeout(this.scrollingTimeout);
               this.scrollingTimeout = setTimeout(() => {
                 this.isScrolling = false;
-              }, 100);
+              }, 125);
             }
             this.ignore ? (this.ignore = !1) : this._scrolled(),
             (this.scrollDeltaVert += Math.abs(t - this.prevScrollTop)),
