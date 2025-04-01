@@ -226,7 +226,7 @@ type FileSystem = {
   /**
    * URI to the directory where assets bundled with the application are stored.
    */
-  bundleDirectory: string | null;
+  bundleDirectory: string | undefined;
   readAsStringAsync: (
     fileUri: string,
     options?: {
