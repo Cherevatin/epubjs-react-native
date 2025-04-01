@@ -361,6 +361,19 @@ export function View({
       return onScroll({ scrollX, scrollY });
     }
 
+    if (type === EventType.OnDoubleTap) {
+      onDoublePress();
+      eventEmitter.trigger(EventType.OnDoubleTap);
+      return onDoubleTap();
+    }
+
+    if (type === EventType.OnSingleTap) {
+      eventEmitter.trigger(EventType.OnPress);
+      onPress();
+      eventEmitter.trigger(EventType.OnSingleTap);
+      return onSingleTap();
+    }
+
     if (type === 'onNavigationLoaded') {
       const { toc, landmarks }: { toc: Toc; landmarks: Landmark[] } =
         parsedEvent;
@@ -516,17 +529,8 @@ export function View({
     <GestureHandler
       width={width}
       height={height}
-      onSingleTap={() => {
-        eventEmitter.trigger(EventType.OnPress);
-        onPress();
-        eventEmitter.trigger(EventType.OnSingleTap);
-        onSingleTap();
-      }}
-      onDoubleTap={() => {
-        onDoublePress();
-        eventEmitter.trigger(EventType.OnDoubleTap);
-        onDoubleTap();
-      }}
+      onSingleTap={() => {}}
+      onDoubleTap={() => {}}
       onLongPress={() => {
         onLongPress();
         eventEmitter.trigger(EventType.OnLongPress);
