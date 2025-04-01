@@ -529,6 +529,8 @@ export function View({
     <GestureHandler
       width={width}
       height={height}
+      onSingleTap={() => {}}
+      onDoubleTap={() => {}}
       onLongPress={() => {
         onLongPress();
         eventEmitter.trigger(EventType.OnLongPress);
