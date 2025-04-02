@@ -48,6 +48,7 @@ export type EventPayloadByEvent = {
   [EventType.OnLongPress]: never;
   [EventType.OnCustomMenuSelection]: CustomMenuSelectionEvent;
   [EventType.OnScroll]: ScrollEvent;
+  [EventType.OnScrollToEnd]: never;
 };
 
 export class EventEmitter {
