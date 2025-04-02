@@ -356,9 +356,13 @@ export function View({
     }
 
     if (type === 'onScroll') {
-      const { scrollX, scrollY } = parsedEvent;
-      eventEmitter.trigger(EventType.OnScroll, { scrollX, scrollY });
-      return onScroll({ scrollX, scrollY });
+      const { contentSize, layoutMeasurement, contentOffset } = parsedEvent;
+      eventEmitter.trigger(EventType.OnScroll, {
+        contentSize,
+        layoutMeasurement,
+        contentOffset,
+      });
+      return onScroll({ contentSize, layoutMeasurement, contentOffset });
     }
 
     if (type === EventType.OnDoubleTap) {
