@@ -307,6 +307,9 @@ export default `
       rendition.on("scrollToEnd", function (event) {
         reactNativeWebview.postMessage(JSON.stringify({
           type: 'onScrollToEnd',
+          isScrollYEnd: event.isScrollYEnd,
+          scrollX: event.left,
+          scrollY: event.top,
         }));
       });
 

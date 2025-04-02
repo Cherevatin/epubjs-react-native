@@ -1,4 +1,4 @@
-import type { Orientation } from 'src/types';
+import type { Orientation, ScrollToEndEvent } from 'src/types';
 import type { ReadyEvent } from 'src/types';
 import type { NavigationLoadedEvent } from 'src/types';
 import type { LocationsReadyEvent } from 'src/types';
@@ -48,7 +48,7 @@ export type EventPayloadByEvent = {
   [EventType.OnLongPress]: never;
   [EventType.OnCustomMenuSelection]: CustomMenuSelectionEvent;
   [EventType.OnScroll]: ScrollEvent;
-  [EventType.OnScrollToEnd]: never;
+  [EventType.OnScrollToEnd]: ScrollToEndEvent;
 };
 
 export class EventEmitter {

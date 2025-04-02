@@ -92,6 +92,10 @@ export type ScrollEvent = {
   scrollY: number;
 };
 
+export type ScrollToEndEvent = {
+  isScrollYEnd: boolean;
+} & ScrollEvent;
+
 export type SelectedEvent = {
   text: string;
   cfiRange: ePubCfi;
@@ -357,7 +361,7 @@ export interface ReaderProps {
    */
   onOrientationChange?: (orientation: Orientation) => void;
   onScroll?: (scroll: ScrollEvent) => void;
-  onScrollToEnd?: () => void;
+  onScrollToEnd?: (event: ScrollToEndEvent) => void;
   /**
    * Called when the book is on the homepage
    * @returns {void} void

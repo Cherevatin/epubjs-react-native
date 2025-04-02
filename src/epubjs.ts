@@ -2991,11 +2991,8 @@ export default `
             if(!this.ignore) {
               if(!this.isScrolling) {
                 this.isScrolling = true;
-
-                if(!this.settings.fullsize && this.container.scrollHeight - this.container.scrollTop - this.container.clientHeight < 10){
-                  this.emit(f.c.MANAGERS.SCROLL_TO_END);
-                }
-
+                let isScrollYEnd = !this.settings.fullsize && this.container.scrollHeight - this.container.scrollTop - this.container.clientHeight < 10;
+                this.emit(f.c.MANAGERS.SCROLL_TO_END, { isScrollYEnd, top: t, left: e });
                 this.emit(f.c.MANAGERS.SCROLL, { top: t, left: e });
                 clearTimeout(this.scrollingTimeout);
                 this.scrollingTimeout = setTimeout(() => {
@@ -6743,11 +6740,8 @@ export default `
             (this.scrollLeft = e);
             if(!this.isScrolling){
               this.isScrolling = true;
-
-              if(!this.settings.fullsize && this.container.scrollHeight - this.container.scrollTop - this.container.clientHeight < 10){
-                this.emit(s.c.MANAGERS.SCROLL_TO_END);
-              }
-
+              let isScrollYEnd = !this.settings.fullsize && this.container.scrollHeight - this.container.scrollTop - this.container.clientHeight < 10;
+              this.emit(s.c.MANAGERS.SCROLL_TO_END, { isScrollYEnd, top: this.scrollTop, left: this.scrollLeft });
               this.emit(s.c.MANAGERS.SCROLL, {
                 top: this.scrollTop,
                 left: this.scrollLeft,

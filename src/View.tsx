@@ -363,8 +363,9 @@ export function View({
     }
 
     if (type === EventType.OnScrollToEnd) {
-      eventEmitter.trigger(EventType.OnScrollToEnd);
-      return onScrollToEnd();
+      const { isScrollYEnd, scrollX, scrollY } = parsedEvent;
+      eventEmitter.trigger(EventType.OnScrollToEnd, { isScrollYEnd, scrollX, scrollY });
+      return onScrollToEnd({ isScrollYEnd, scrollX, scrollY });
     }
 
     if (type === EventType.OnDoubleTap) {
