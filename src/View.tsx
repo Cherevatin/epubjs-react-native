@@ -45,6 +45,7 @@ export function View({
   onPressFootnote = () => {},
   onOrientationChange = () => {},
   onScroll = () => {},
+  onScrollToEnd = () => {},
   onLayout = () => {},
   onNavigationLoaded = () => {},
   onBeginning = () => {},
@@ -359,6 +360,11 @@ export function View({
       const { scrollX, scrollY } = parsedEvent;
       eventEmitter.trigger(EventType.OnScroll, { scrollX, scrollY });
       return onScroll({ scrollX, scrollY });
+    }
+
+    if (type === EventType.OnScrollToEnd) {
+      eventEmitter.trigger(EventType.OnScrollToEnd);
+      return onScrollToEnd();
     }
 
     if (type === EventType.OnDoubleTap) {

@@ -652,6 +652,7 @@ export default `
             ORIENTATION_CHANGE: "orientationchange",
             ADDED: "added",
             SCROLL: "scroll",
+            SCROLL_TO_END: "scrollToEnd",
             SCROLLED: "scrolled",
             REMOVED: "removed",
           },
@@ -682,6 +683,7 @@ export default `
             UNSELECTED: "unselected",
             LAYOUT: "layout",
             SCROLL: "scroll",
+            SCROLL_TO_END: "scrollToEnd",
             FOOTNOTE_CLICKED: "footnoteClicked",
           },
           LAYOUT: { UPDATED: "updated" },
@@ -2989,6 +2991,11 @@ export default `
             if(!this.ignore) {
               if(!this.isScrolling) {
                 this.isScrolling = true;
+
+                if(!this.settings.fullsize && this.container.scrollHeight - this.container.scrollTop - this.container.clientHeight < 10){
+                  this.emit(f.c.MANAGERS.SCROLL_TO_END);
+                }
+
                 this.emit(f.c.MANAGERS.SCROLL, { top: t, left: e });
                 clearTimeout(this.scrollingTimeout);
                 this.scrollingTimeout = setTimeout(() => {
@@ -4929,6 +4936,10 @@ export default `
               l.c.MANAGERS.SCROLL,
               (e) => this.emit(l.c.RENDITION.SCROLL, e),
             ),
+            this.manager.on(
+              l.c.MANAGERS.SCROLL_TO_END,
+              (e) => this.emit(l.c.RENDITION.SCROLL_TO_END, e),
+            ),
             this.emit(l.c.RENDITION.STARTED),
             this.starting.resolve();
         }
@@ -6732,6 +6743,11 @@ export default `
             (this.scrollLeft = e);
             if(!this.isScrolling){
               this.isScrolling = true;
+
+              if(!this.settings.fullsize && this.container.scrollHeight - this.container.scrollTop - this.container.clientHeight < 10){
+                this.emit(s.c.MANAGERS.SCROLL_TO_END);
+              }
+
               this.emit(s.c.MANAGERS.SCROLL, {
                 top: this.scrollTop,
                 left: this.scrollLeft,

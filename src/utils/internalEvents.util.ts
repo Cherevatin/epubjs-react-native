@@ -28,7 +28,8 @@ const INTERNAL_EVENTS = [
   'onRemoveBookmarks',
   'onUpdateBookmark',
   EventType.OnDoubleTap,
-  EventType.OnSingleTap
+  EventType.OnSingleTap,
+  EventType.OnScrollToEnd
 ];
 
 export default INTERNAL_EVENTS;

@@ -304,6 +304,12 @@ export default `
         }));
       });
 
+      rendition.on("scrollToEnd", function (event) {
+        reactNativeWebview.postMessage(JSON.stringify({
+          type: 'onScrollToEnd',
+        }));
+      });
+
       rendition.on("dblclick", function (layout) {
         reactNativeWebview.postMessage(JSON.stringify({
           type: 'onDoubleTap',

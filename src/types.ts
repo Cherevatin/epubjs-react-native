@@ -357,6 +357,7 @@ export interface ReaderProps {
    */
   onOrientationChange?: (orientation: Orientation) => void;
   onScroll?: (scroll: ScrollEvent) => void;
+  onScrollToEnd?: () => void;
   /**
    * Called when the book is on the homepage
    * @returns {void} void
