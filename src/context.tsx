@@ -22,6 +22,7 @@ import type {
   Landmark,
   Flow,
   PaginateOptions,
+  Margins,
 } from './types';
 import * as webViewInjectFunctions from './utils/webViewInjectFunctions';
 import { EventEmitter } from './utils/EventEmitter';
@@ -60,6 +61,7 @@ enum Types {
   SET_BOOKMARKS = 'SET_BOOKMARKS',
   SET_IS_BOOKMARKED = 'SET_IS_BOOKMARKED',
   SET_FLOW = 'SET_FLOW',
+  SET_PAGE_OBSERVER_MARGIN = 'SET_PAGE_OBSERVER_MARGIN',
 }
 
 type BookPayload = {
@@ -93,6 +95,7 @@ type BookPayload = {
   [Types.SET_BOOKMARKS]: Bookmark[];
   [Types.SET_IS_BOOKMARKED]: boolean;
   [Types.SET_FLOW]: Flow;
+  [Types.SET_PAGE_OBSERVER_MARGIN]: Margins;
 };
 
 type BookActions = ActionMap<BookPayload>[keyof ActionMap<BookPayload>];
@@ -129,6 +132,7 @@ type InitialState = {
   isBookmarked: boolean;
   flow: Flow;
   eventEmitter: EventEmitter;
+  pageObserverRootMargin: Margins;
 };
 
 export const defaultTheme: Theme = {
@@ -189,6 +193,12 @@ const initialState: InitialState = {
   isBookmarked: false,
   flow: 'auto',
   eventEmitter: new EventEmitter(),
+  pageObserverRootMargin: {
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+  },
 };
 
 function bookReducer(state: InitialState, action: BookActions): InitialState {
@@ -303,6 +313,11 @@ function bookReducer(state: InitialState, action: BookActions): InitialState {
         ...state,
         flow: action.payload,
       };
+    case Types.SET_PAGE_OBSERVER_MARGIN:
+      return {
+        ...state,
+        pageObserverRootMargin: action.payload,
+      };
     default:
       return state;
   }
@@ -396,6 +411,8 @@ export interface ReaderContextProps {
    * ```
    */
   changeTheme: (theme: Theme) => void;
+  initPageObserver: () => void;
+  setPageObserverRootMargin: ({ top, bottom, left, right }: Margins) => void;
 
   /**
    * Change font size of all elements in the book
@@ -662,7 +679,6 @@ const ReaderContext = createContext<ReaderContextProps>({
   changeTheme: () => {},
   changeFontFamily: () => {},
   changeFontSize: () => {},
-
   setKey: () => {},
 
   setSection: () => {},
@@ -725,6 +741,8 @@ const ReaderContext = createContext<ReaderContextProps>({
   setFlow: () => {},
   flow: 'auto',
   eventEmitter: new EventEmitter(),
+  initPageObserver: () => {},
+  setPageObserverRootMargin: () => {},
 });
 
 function ReaderProvider({ children }: { children: React.ReactNode }) {
@@ -743,6 +761,57 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
     `);
     dispatch({ type: Types.CHANGE_THEME, payload: theme });
   }, []);
+
+  const setPageObserverRootMargin = useCallback((margin: Margins) => {
+    dispatch({
+      type: Types.SET_PAGE_OBSERVER_MARGIN,
+      payload: margin,
+    });
+  }, []);
+
+  const initPageObserver = useCallback(() => {
+    const { top, bottom, left, right } = state.pageObserverRootMargin;
+    book.current?.injectJavaScript(`
+        var iframe = document.querySelector("iframe");
+        var container = document.querySelector(".epub-container");
+        var iframeDoc = iframe.contentDocument;
+        var scrollPos =  0;
+
+        if (window.completePageObserver) {
+          window.completePageObserver.disconnect();
+        }
+
+        window.completePageObserver = new IntersectionObserver(
+          (entries) => {
+            var direction;
+            if (iframe.getBoundingClientRect().top > scrollPos){
+              direction = 'UP';
+            } else {
+              direction = 'DOWN';
+            }
+            
+            entries.forEach(entry => {
+              const number = entry?.target?.textContent?.trim();
+              if(direction === 'DOWN' && entry.intersectionRect.y !== 0){
+                reactNativeWebview.postMessage(JSON.stringify({
+                  type: "onPageComplete",
+                  page: Number(number),
+                }));
+              }
+            })
+            scrollPos = iframe.getBoundingClientRect().top
+          },
+          {
+            root: null,
+            rootMargin: '${top || 0}px ${right || 0}px ${bottom || 0}px ${left || 0}px'
+          }
+        );
+
+        iframeDoc.querySelectorAll(".page-number").forEach((element) => {
+          completePageObserver.observe(element);
+        }); true;
+    `);
+  }, [state.pageObserverRootMargin]);
 
   const changeFontFamily = useCallback((fontFamily: string) => {
     book.current?.injectJavaScript(`
@@ -1325,6 +1394,8 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       setFlow,
       flow: state.flow,
       eventEmitter: state.eventEmitter,
+      initPageObserver,
+      setPageObserverRootMargin,
     }),
     [
       changeFontFamily,
@@ -1395,6 +1466,8 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       setFlow,
       state.flow,
       state.eventEmitter,
+      initPageObserver,
+      setPageObserverRootMargin,
     ]
   );
   return (
