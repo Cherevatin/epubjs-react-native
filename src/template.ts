@@ -299,8 +299,10 @@ export default `
       rendition.on("scroll", function (event) {
         reactNativeWebview.postMessage(JSON.stringify({
           type: 'onScroll',
-          scrollX: event.left,
-          scrollY: event.top,
+          contentSize: event.contentSize,
+          layoutMeasurement: event.layoutMeasurement,
+          contentOffset: event.contentOffset,
+          currentLocation: rendition.currentLocation(),
         }));
       });
 

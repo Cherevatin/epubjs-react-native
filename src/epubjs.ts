@@ -2989,7 +2989,20 @@ export default `
             if(!this.ignore) {
               if(!this.isScrolling) {
                 this.isScrolling = true;
-                this.emit(f.c.MANAGERS.SCROLL, { top: t, left: e });
+                this.emit(f.c.MANAGERS.SCROLL, { 
+                  contentSize : {
+                    height: this.container.scrollHeight,
+                    width: this.container.scrollWidth,
+                  },
+                  layoutMeasurement: {
+                    height: this.container.clientHeight,
+                    width: this.container.clientWidth,
+                  },
+                  contentOffset: {
+                    x: this.container.scrollLeft,
+                    y: this.container.scrollTop,
+                  }
+                });
                 clearTimeout(this.scrollingTimeout);
                 this.scrollingTimeout = setTimeout(() => {
                   this.isScrolling = false;
@@ -6733,8 +6746,18 @@ export default `
             if(!this.isScrolling){
               this.isScrolling = true;
               this.emit(s.c.MANAGERS.SCROLL, {
-                top: this.scrollTop,
-                left: this.scrollLeft,
+                contentSize : {
+                  height: this.container.scrollHeight,
+                  width: this.container.scrollWidth,
+                },
+                layoutMeasurement: {
+                  height: this.container.clientHeight,
+                  width: this.container.clientWidth,
+                },
+                contentOffset: {
+                  x: this.container.scrollLeft,
+                  y: this.container.scrollTop,
+                }
               }),
               clearTimeout(this.scrollingTimeout);
               this.scrollingTimeout = setTimeout(() => {

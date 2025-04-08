@@ -88,8 +88,19 @@ export type DisplayErrorEvent = {
 };
 
 export type ScrollEvent = {
-  scrollX: number;
-  scrollY: number;
+  contentOffset: {
+    x: number;
+    y: number;
+  };
+  contentSize: {
+    height: number;
+    width: number;
+  };
+  layoutMeasurement: {
+    height: number;
+    width: number;
+  };
+  currentLocation: Location;
 };
 
 export type SelectedEvent = {

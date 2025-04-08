@@ -14,6 +14,7 @@ import type {
   Location,
   Orientation,
   ReaderProps,
+  ScrollEvent,
   SearchResult,
   Section,
   Toc,
@@ -356,9 +357,24 @@ export function View({
     }
 
     if (type === 'onScroll') {
-      const { scrollX, scrollY } = parsedEvent;
-      eventEmitter.trigger(EventType.OnScroll, { scrollX, scrollY });
-      return onScroll({ scrollX, scrollY });
+      const {
+        contentSize,
+        layoutMeasurement,
+        contentOffset,
+        currentLocation,
+      }: ScrollEvent = parsedEvent;
+      eventEmitter.trigger(EventType.OnScroll, {
+        contentSize,
+        layoutMeasurement,
+        contentOffset,
+        currentLocation,
+      });
+      return onScroll({
+        contentSize,
+        layoutMeasurement,
+        contentOffset,
+        currentLocation,
+      });
     }
 
     if (type === EventType.OnDoubleTap) {
