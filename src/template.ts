@@ -302,6 +302,7 @@ export default `
           contentSize: event.contentSize,
           layoutMeasurement: event.layoutMeasurement,
           contentOffset: event.contentOffset,
+          currentLocation: rendition.currentLocation(),
         }));
       });
 

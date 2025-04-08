@@ -100,6 +100,7 @@ export type ScrollEvent = {
     height: number;
     width: number;
   };
+  currentLocation: Location;
 };
 
 export type SelectedEvent = {
