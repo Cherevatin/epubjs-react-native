@@ -81,7 +81,6 @@ export function useReader(): UseReader {
     flow,
     eventEmitter,
     initPageObserver,
-    setPageObserverRootMargin,
   } = context;
 
   return {
@@ -131,6 +130,5 @@ export function useReader(): UseReader {
     flow,
     eventEmitter,
     initPageObserver,
-    setPageObserverRootMargin,
   };
 }

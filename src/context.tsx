@@ -411,8 +411,7 @@ export interface ReaderContextProps {
    * ```
    */
   changeTheme: (theme: Theme) => void;
-  initPageObserver: () => void;
-  setPageObserverRootMargin: ({ top, bottom, left, right }: Margins) => void;
+  initPageObserver: ({ top, bottom, left, right }?: Margins) => void;
 
   /**
    * Change font size of all elements in the book
@@ -742,7 +741,6 @@ const ReaderContext = createContext<ReaderContextProps>({
   flow: 'auto',
   eventEmitter: new EventEmitter(),
   initPageObserver: () => {},
-  setPageObserverRootMargin: () => {},
 });
 
 function ReaderProvider({ children }: { children: React.ReactNode }) {
@@ -762,16 +760,20 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: Types.CHANGE_THEME, payload: theme });
   }, []);
 
-  const setPageObserverRootMargin = useCallback((margin: Margins) => {
-    dispatch({
-      type: Types.SET_PAGE_OBSERVER_MARGIN,
-      payload: margin,
-    });
-  }, []);
+  const initPageObserver = useCallback(
+    (margin?: Margins) => {
+      if (margin) {
+        dispatch({
+          type: Types.SET_PAGE_OBSERVER_MARGIN,
+          payload: margin,
+        });
+      }
+      const { top, bottom, left, right } = {
+        ...state.pageObserverRootMargin,
+        ...margin,
+      };
 
-  const initPageObserver = useCallback(() => {
-    const { top, bottom, left, right } = state.pageObserverRootMargin;
-    book.current?.injectJavaScript(`
+      book.current?.injectJavaScript(`
         var iframe = document.querySelector("iframe");
         var container = document.querySelector(".epub-container");
         var iframeDoc = iframe.contentDocument;
@@ -811,7 +813,9 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
           completePageObserver.observe(element);
         }); true;
     `);
-  }, [state.pageObserverRootMargin]);
+    },
+    [state.pageObserverRootMargin]
+  );
 
   const changeFontFamily = useCallback((fontFamily: string) => {
     book.current?.injectJavaScript(`
@@ -1395,7 +1399,6 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       flow: state.flow,
       eventEmitter: state.eventEmitter,
       initPageObserver,
-      setPageObserverRootMargin,
     }),
     [
       changeFontFamily,
@@ -1467,7 +1470,6 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       state.flow,
       state.eventEmitter,
       initPageObserver,
-      setPageObserverRootMargin,
     ]
   );
   return (
