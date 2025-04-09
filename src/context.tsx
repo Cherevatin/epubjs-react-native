@@ -642,6 +642,7 @@ export interface ReaderContextProps {
   setFlow: (flow: Flow) => void;
 
   eventEmitter: EventEmitter;
+  pageObserverRootMargins: Margins;
 }
 
 const ReaderContext = createContext<ReaderContextProps>({
@@ -741,6 +742,12 @@ const ReaderContext = createContext<ReaderContextProps>({
   flow: 'auto',
   eventEmitter: new EventEmitter(),
   initPageObserver: () => {},
+  pageObserverRootMargins: {
+    top: 0,
+    bottom: 0,
+    right: 0,
+    left: 0,
+  },
 });
 
 function ReaderProvider({ children }: { children: React.ReactNode }) {
@@ -763,10 +770,10 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
   const initPageObserver = useCallback(
     (margin?: Margins) => {
       const { top, bottom, left, right } = {
-        top: margin?.top || state.pageObserverRootMargin.top,
-        bottom: margin?.bottom || state.pageObserverRootMargin.bottom,
-        left: margin?.left || state.pageObserverRootMargin.left,
-        right: margin?.right || state.pageObserverRootMargin.right,
+        top: margin?.top ?? state.pageObserverRootMargin.top,
+        bottom: margin?.bottom ?? state.pageObserverRootMargin.bottom,
+        left: margin?.left ?? state.pageObserverRootMargin.left,
+        right: margin?.right ?? state.pageObserverRootMargin.right,
       };
 
       if (
@@ -1371,6 +1378,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       flow: state.flow,
       eventEmitter: state.eventEmitter,
       initPageObserver,
+      pageObserverRootMargins: state.pageObserverRootMargin,
     }),
     [
       changeFontFamily,
@@ -1442,6 +1450,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       state.flow,
       state.eventEmitter,
       initPageObserver,
+      state.pageObserverRootMargin,
     ]
   );
   return (

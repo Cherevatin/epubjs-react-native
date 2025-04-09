@@ -148,7 +148,7 @@ export default `
           },
           {
             root: null,
-            rootMargin: (margin.top || 0) + 'px ' + (margin.right || 0) + 'px ' + (margin.bottom || 0) + 'px ' + (margin.left || 0) + 'px'
+            rootMargin: margin.top + 'px ' + margin.right + 'px ' + margin.bottom + 'px ' + margin.left + 'px'
           }
         );
         iframeDoc.querySelectorAll(".page-number").forEach((element) => {
