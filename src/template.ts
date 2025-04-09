@@ -44,7 +44,7 @@ export default `
 
   <body oncopy='return false' oncut='return false'>
     <div id="viewer"></div>
-    
+
     <script>
       let book;
       let rendition;
@@ -299,7 +299,7 @@ export default `
         var percent = book.locations.percentageFromCfi(location.start.cfi);
         var percentage = Math.floor(percent * 100);
         var chapter = getChapter(location);
-        createObserver(_margin);
+
         reactNativeWebview.postMessage(JSON.stringify({
           type: "onLocationChange",
           totalLocations: book.locations.total,
