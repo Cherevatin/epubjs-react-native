@@ -44,17 +44,27 @@ export default `
 
   <body oncopy='return false' oncut='return false'>
     <div id="viewer"></div>
-
+    
     <script>
       let book;
       let rendition;
-
+      let _margin = { top: 0, right: 0, bottom: 0, left: 0 };
+      let completePageObserver;
       const type = window.type;
       const file = window.book;
       const theme = window.theme;
       const initialLocations = window.locations;
       const enableSelection = window.enable_selection;
-
+      
+      Object.defineProperty(window, 'margin', {
+        get() {
+          return _margin;
+        },
+        set(val) {
+          _margin = val;
+          createObserver(_margin);
+        }
+      });
       if (!file) {
         alert('Failed load book');
       }
@@ -80,19 +90,19 @@ export default `
       });
      const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView: window;
       reactNativeWebview.postMessage(JSON.stringify({ type: "onStarted" }));
-
+      
       function flatten(chapters) {
         return [].concat.apply([], chapters.map((chapter) => [].concat.apply([chapter], flatten(chapter.subitems))));
       }
-
+      
       function getCfiFromHref(book, href) {
         const [_, id] = href.split('#')
         let section = book.spine.get(href.split('/')[1]) || book.spine.get(href) || book.spine.get(href.split('/').slice(1).join('/'))
-
+        
         const el = (id ? section.document.getElementById(id) : section.document.body)
         return section.cfiFromElement(el)
       }
-
+      
       function getChapter(location) {
           const locationHref = location.start.href
 
@@ -108,6 +118,43 @@ export default `
           return match;
       };
 
+      function createObserver(margin) {
+        var iframe = document.querySelector("iframe");
+        var container = document.querySelector(".epub-container");
+        var iframeDoc = iframe.contentDocument;
+        var scrollPos =  0;
+        if (completePageObserver) {
+          completePageObserver.disconnect();
+        }
+        completePageObserver = new IntersectionObserver(
+          (entries) => {
+            var direction;
+            if (iframe.getBoundingClientRect().top > scrollPos){
+              direction = 'UP';
+            } else {
+              direction = 'DOWN';
+            }
+            
+            entries.forEach(entry => {
+              const number = entry?.target?.textContent?.trim();
+              if(direction === 'DOWN' && entry.intersectionRect.y !== 0){
+                reactNativeWebview.postMessage(JSON.stringify({
+                  type: "onPageComplete",
+                  page: Number(number),
+                }));
+              }
+            })
+            scrollPos = iframe.getBoundingClientRect().top
+          },
+          {
+            root: null,
+            rootMargin: (margin.top || 0) + 'px ' + (margin.right || 0) + 'px ' + (margin.bottom || 0) + 'px ' + (margin.left || 0) + 'px'
+          }
+        );
+        iframeDoc.querySelectorAll(".page-number").forEach((element) => {
+          completePageObserver.observe(element);
+        });
+      }
       const makeRangeCfi = (a, b) => {
         const CFI = new ePub.CFI()
         const start = CFI.parse(a), end = CFI.parse(b)
@@ -163,7 +210,7 @@ export default `
           if (initialLocations) {
             return book.locations.load(initialLocations);
           }
-
+          
           book.locations.generate(1600).then(function () {
             reactNativeWebview.postMessage(JSON.stringify({
               type: "onLocationsReady",
@@ -177,10 +224,10 @@ export default `
         })
         .then(function () {
           var displayed = rendition.display();
-
+          
           displayed.then(function () {
             var currentLocation = rendition.currentLocation();
-
+            
             reactNativeWebview.postMessage(JSON.stringify({
               type: "onReady",
               totalLocations: book.locations.total,
@@ -252,7 +299,7 @@ export default `
         var percent = book.locations.percentageFromCfi(location.start.cfi);
         var percentage = Math.floor(percent * 100);
         var chapter = getChapter(location);
-
+        createObserver(_margin);
         reactNativeWebview.postMessage(JSON.stringify({
           type: "onLocationChange",
           totalLocations: book.locations.total,
@@ -339,7 +386,7 @@ export default `
       rendition.on("markClicked", function (cfiRange, contents) {
         const annotations = Object.values(rendition.annotations._annotations);
         const annotation = annotations.find(item => item.cfiRange === cfiRange);
-
+        
         if (annotation) {
           reactNativeWebview.postMessage(JSON.stringify({
             type: 'onPressAnnotation',

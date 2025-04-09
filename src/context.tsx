@@ -769,49 +769,15 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
         });
       }
       const { top, bottom, left, right } = {
-        ...state.pageObserverRootMargin,
-        ...margin,
+        top: margin?.top || state.pageObserverRootMargin.top,
+        bottom: margin?.bottom || state.pageObserverRootMargin.bottom,
+        left: margin?.left || state.pageObserverRootMargin.left,
+        right: margin?.right || state.pageObserverRootMargin.right,
       };
 
       book.current?.injectJavaScript(`
-        var iframe = document.querySelector("iframe");
-        var container = document.querySelector(".epub-container");
-        var iframeDoc = iframe.contentDocument;
-        var scrollPos =  0;
-
-        if (window.completePageObserver) {
-          window.completePageObserver.disconnect();
-        }
-
-        window.completePageObserver = new IntersectionObserver(
-          (entries) => {
-            var direction;
-            if (iframe.getBoundingClientRect().top > scrollPos){
-              direction = 'UP';
-            } else {
-              direction = 'DOWN';
-            }
-            
-            entries.forEach(entry => {
-              const number = entry?.target?.textContent?.trim();
-              if(direction === 'DOWN' && entry.intersectionRect.y !== 0){
-                reactNativeWebview.postMessage(JSON.stringify({
-                  type: "onPageComplete",
-                  page: Number(number),
-                }));
-              }
-            })
-            scrollPos = iframe.getBoundingClientRect().top
-          },
-          {
-            root: null,
-            rootMargin: '${top || 0}px ${right || 0}px ${bottom || 0}px ${left || 0}px'
-          }
-        );
-
-        iframeDoc.querySelectorAll(".page-number").forEach((element) => {
-          completePageObserver.observe(element);
-        }); true;
+        window.margin = { top:${top}, bottom:${bottom}, left:${left}, right:${right} };
+        true;
     `);
     },
     [state.pageObserverRootMargin]
