@@ -762,18 +762,24 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
 
   const initPageObserver = useCallback(
     (margin?: Margins) => {
-      if (margin) {
-        dispatch({
-          type: Types.SET_PAGE_OBSERVER_MARGIN,
-          payload: margin,
-        });
-      }
       const { top, bottom, left, right } = {
         top: margin?.top || state.pageObserverRootMargin.top,
         bottom: margin?.bottom || state.pageObserverRootMargin.bottom,
         left: margin?.left || state.pageObserverRootMargin.left,
         right: margin?.right || state.pageObserverRootMargin.right,
       };
+
+      if (
+        top !== state.pageObserverRootMargin.top ||
+        right !== state.pageObserverRootMargin.right ||
+        bottom !== state.pageObserverRootMargin.bottom ||
+        left !== state.pageObserverRootMargin.left
+      ) {
+        dispatch({
+          type: Types.SET_PAGE_OBSERVER_MARGIN,
+          payload: { top, bottom, left, right },
+        });
+      }
 
       book.current?.injectJavaScript(`
         window.margin = { top:${top}, bottom:${bottom}, left:${left}, right:${right} };
