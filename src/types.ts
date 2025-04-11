@@ -6,6 +6,13 @@ export type PaginateOptions = {
   keepScrollOffset?: boolean;
 };
 
+export type Margins = {
+  top?: number;
+  right?: number;
+  bottom?: number;
+  left?: number;
+};
+
 export type Location = {
   atStart?: boolean;
   atEnd?: boolean;
@@ -85,6 +92,10 @@ export type CustomMenuItem = WebViewCustomMenuItems & {
 
 export type DisplayErrorEvent = {
   reason: string;
+};
+
+export type PageCompleteEvent = {
+  page: number;
 };
 
 export type ScrollEvent = {
@@ -526,6 +537,8 @@ export interface ReaderProps {
    * Called when annotation is pressed
    */
   onPressAnnotation?: (annotation: Annotation) => void;
+
+  onPageComplete?: (event: PageCompleteEvent) => void;
 
   /**
    * Called when footnote ref is pressed

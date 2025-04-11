@@ -13,6 +13,7 @@ import type {
   Landmark,
   Location,
   Orientation,
+  PageCompleteEvent,
   ReaderProps,
   ScrollEvent,
   SearchResult,
@@ -63,6 +64,7 @@ export function View({
   onSwipeRight = () => {},
   onSwipeUp = () => {},
   onSwipeDown = () => {},
+  onPageComplete = () => {},
   defaultTheme = initialTheme,
   renderOpeningBookComponent = () => (
     <OpeningBook
@@ -475,6 +477,12 @@ export function View({
       handleChangeIsBookmarked(Bookmarks);
       eventEmitter.trigger(EventType.OnChangeBookmarks, Bookmarks);
       return onChangeBookmarks(Bookmarks);
+    }
+
+    if (type === 'onPageComplete') {
+      const { page }: PageCompleteEvent = parsedEvent;
+      eventEmitter.trigger(EventType.OnPageComplete, { page });
+      return onPageComplete({ page });
     }
 
     return () => {};

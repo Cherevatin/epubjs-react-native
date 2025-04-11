@@ -22,6 +22,7 @@ import type {
   Landmark,
   Flow,
   PaginateOptions,
+  Margins,
 } from './types';
 import * as webViewInjectFunctions from './utils/webViewInjectFunctions';
 import { EventEmitter } from './utils/EventEmitter';
@@ -60,6 +61,7 @@ enum Types {
   SET_BOOKMARKS = 'SET_BOOKMARKS',
   SET_IS_BOOKMARKED = 'SET_IS_BOOKMARKED',
   SET_FLOW = 'SET_FLOW',
+  SET_PAGE_OBSERVER_MARGIN = 'SET_PAGE_OBSERVER_MARGIN',
 }
 
 type BookPayload = {
@@ -93,6 +95,7 @@ type BookPayload = {
   [Types.SET_BOOKMARKS]: Bookmark[];
   [Types.SET_IS_BOOKMARKED]: boolean;
   [Types.SET_FLOW]: Flow;
+  [Types.SET_PAGE_OBSERVER_MARGIN]: Margins;
 };
 
 type BookActions = ActionMap<BookPayload>[keyof ActionMap<BookPayload>];
@@ -129,6 +132,7 @@ type InitialState = {
   isBookmarked: boolean;
   flow: Flow;
   eventEmitter: EventEmitter;
+  pageObserverRootMargin: Margins;
 };
 
 export const defaultTheme: Theme = {
@@ -189,6 +193,12 @@ const initialState: InitialState = {
   isBookmarked: false,
   flow: 'auto',
   eventEmitter: new EventEmitter(),
+  pageObserverRootMargin: {
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+  },
 };
 
 function bookReducer(state: InitialState, action: BookActions): InitialState {
@@ -303,6 +313,11 @@ function bookReducer(state: InitialState, action: BookActions): InitialState {
         ...state,
         flow: action.payload,
       };
+    case Types.SET_PAGE_OBSERVER_MARGIN:
+      return {
+        ...state,
+        pageObserverRootMargin: action.payload,
+      };
     default:
       return state;
   }
@@ -396,6 +411,7 @@ export interface ReaderContextProps {
    * ```
    */
   changeTheme: (theme: Theme) => void;
+  initPageObserver: ({ top, bottom, left, right }?: Margins) => void;
 
   /**
    * Change font size of all elements in the book
@@ -626,6 +642,7 @@ export interface ReaderContextProps {
   setFlow: (flow: Flow) => void;
 
   eventEmitter: EventEmitter;
+  pageObserverRootMargins: Margins;
 }
 
 const ReaderContext = createContext<ReaderContextProps>({
@@ -662,7 +679,6 @@ const ReaderContext = createContext<ReaderContextProps>({
   changeTheme: () => {},
   changeFontFamily: () => {},
   changeFontSize: () => {},
-
   setKey: () => {},
 
   setSection: () => {},
@@ -725,6 +741,13 @@ const ReaderContext = createContext<ReaderContextProps>({
   setFlow: () => {},
   flow: 'auto',
   eventEmitter: new EventEmitter(),
+  initPageObserver: () => {},
+  pageObserverRootMargins: {
+    top: 0,
+    bottom: 0,
+    right: 0,
+    left: 0,
+  },
 });
 
 function ReaderProvider({ children }: { children: React.ReactNode }) {
@@ -743,6 +766,35 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
     `);
     dispatch({ type: Types.CHANGE_THEME, payload: theme });
   }, []);
+
+  const initPageObserver = useCallback(
+    (margin?: Margins) => {
+      const { top, bottom, left, right } = {
+        top: margin?.top ?? state.pageObserverRootMargin.top,
+        bottom: margin?.bottom ?? state.pageObserverRootMargin.bottom,
+        left: margin?.left ?? state.pageObserverRootMargin.left,
+        right: margin?.right ?? state.pageObserverRootMargin.right,
+      };
+
+      if (
+        top !== state.pageObserverRootMargin.top ||
+        right !== state.pageObserverRootMargin.right ||
+        bottom !== state.pageObserverRootMargin.bottom ||
+        left !== state.pageObserverRootMargin.left
+      ) {
+        dispatch({
+          type: Types.SET_PAGE_OBSERVER_MARGIN,
+          payload: { top, bottom, left, right },
+        });
+      }
+
+      book.current?.injectJavaScript(`
+        window.margin = { top:${top}, bottom:${bottom}, left:${left}, right:${right} };
+        true;
+    `);
+    },
+    [state.pageObserverRootMargin]
+  );
 
   const changeFontFamily = useCallback((fontFamily: string) => {
     book.current?.injectJavaScript(`
@@ -1325,6 +1377,8 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       setFlow,
       flow: state.flow,
       eventEmitter: state.eventEmitter,
+      initPageObserver,
+      pageObserverRootMargins: state.pageObserverRootMargin,
     }),
     [
       changeFontFamily,
@@ -1395,6 +1449,8 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       setFlow,
       state.flow,
       state.eventEmitter,
+      initPageObserver,
+      state.pageObserverRootMargin,
     ]
   );
   return (

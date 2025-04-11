@@ -33,4 +33,5 @@ export enum EventType {
   OnLongPress = 'onLongPress',
   OnCustomMenuSelection = 'onCustomMenuSelection',
   OnScroll = 'onScroll',
+  OnPageComplete = 'onPageComplete',
 }

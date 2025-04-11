@@ -1,18 +1,21 @@
-import type { Orientation } from 'src/types';
-import type { ReadyEvent } from 'src/types';
-import type { NavigationLoadedEvent } from 'src/types';
-import type { LocationsReadyEvent } from 'src/types';
-import type { LayoutEvent } from 'src/types';
-import type { SearchEvent } from 'src/types';
-import type { LocationChangeEvent } from 'src/types';
-import type { Annotation } from 'src/types';
-import type { Footnote } from 'src/types';
-import type { CustomMenuSelectionEvent } from 'src/types';
-import type { Bookmark } from 'src/types';
-import type { ScrollEvent } from 'src/types';
-import type { SelectedEvent } from 'src/types';
-import type { DisplayErrorEvent } from 'src/types';
-import { EventType } from './enums/event-type.enum';
+import type {
+  Orientation,
+  PageCompleteEvent,
+  ReadyEvent,
+  NavigationLoadedEvent,
+  LocationsReadyEvent,
+  LayoutEvent,
+  SearchEvent,
+  LocationChangeEvent,
+  Annotation,
+  Footnote,
+  CustomMenuSelectionEvent,
+  Bookmark,
+  ScrollEvent,
+  SelectedEvent,
+  DisplayErrorEvent,
+} from 'src/types';
+import type { EventType } from './enums/event-type.enum';
 
 export type EventPayloadByEvent = {
   [EventType.OnStarted]: never;
@@ -48,6 +51,7 @@ export type EventPayloadByEvent = {
   [EventType.OnLongPress]: never;
   [EventType.OnCustomMenuSelection]: CustomMenuSelectionEvent;
   [EventType.OnScroll]: ScrollEvent;
+  [EventType.OnPageComplete]: PageCompleteEvent;
 };
 
 export class EventEmitter {
