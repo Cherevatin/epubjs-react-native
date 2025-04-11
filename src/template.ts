@@ -408,6 +408,24 @@ export default `
           layout: layout,
         }));
       });
+
+      rendition.on("swipeLeft", function () {
+        reactNativeWebview.postMessage(JSON.stringify({
+          type: 'onSwipeLeft',
+        }));
+      });
+
+      rendition.on("swipeRight", function () {
+        reactNativeWebview.postMessage(JSON.stringify({
+          type: 'onSwipeRight',
+        }));
+      });
+
+      rendition.on("longPress", function () {
+        reactNativeWebview.postMessage(JSON.stringify({
+          type: 'onLongPress',
+        }));
+      });
     </script>
   </body>
 </html>

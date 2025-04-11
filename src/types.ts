@@ -463,11 +463,13 @@ export interface ReaderProps {
   /**
    * Called when swipe up gesture is detected
    * @returns {void} void
+   * @deprecated doesn't work anymore
    */
   onSwipeUp?: () => void;
   /**
    * Called when swipe down gesture is detected
    * @returns {void} void
+   * @deprecated doesn't work anymore
    */
   onSwipeDown?: () => void;
   /**

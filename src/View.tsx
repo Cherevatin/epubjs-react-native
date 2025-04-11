@@ -22,7 +22,6 @@ import type {
 } from './types';
 import { OpeningBook } from './utils/OpeningBook';
 import INTERNAL_EVENTS from './utils/internalEvents.util';
-import { GestureHandler } from './utils/GestureHandler';
 import { EventType } from './utils/enums/event-type.enum';
 
 export type ViewProps = Omit<ReaderProps, 'src' | 'fileSystem'> & {
@@ -62,8 +61,6 @@ export function View({
   enableSwipe = true,
   onSwipeLeft = () => {},
   onSwipeRight = () => {},
-  onSwipeUp = () => {},
-  onSwipeDown = () => {},
   onPageComplete = () => {},
   defaultTheme = initialTheme,
   renderOpeningBookComponent = () => (
@@ -92,7 +89,6 @@ export function View({
   getInjectionJavascriptFn,
   onWebViewMessage,
   waitForLocationsReady = false,
-  keepScrollOffsetOnLocationChange,
   flow,
   onChangeSection = () => {},
 }: ViewProps) {
@@ -105,8 +101,6 @@ export function View({
     setLocations,
     setAtStart,
     setAtEnd,
-    goNext,
-    goPrevious,
     isRendering,
     setIsRendering,
     goToLocation,
@@ -392,6 +386,23 @@ export function View({
       return onSingleTap();
     }
 
+    if (enableSwipe) {
+      if (type === EventType.OnSwipeLeft) {
+        eventEmitter.trigger(EventType.OnSwipeLeft);
+        return onSwipeLeft();
+      }
+
+      if (type === EventType.OnSwipeRight) {
+        eventEmitter.trigger(EventType.OnSwipeRight);
+        return onSwipeRight();
+      }
+    }
+
+    if (type === EventType.OnLongPress) {
+      eventEmitter.trigger(EventType.OnLongPress);
+      return onLongPress();
+    }
+
     if (type === 'onNavigationLoaded') {
       const { toc, landmarks }: { toc: Toc; landmarks: Landmark[] } =
         parsedEvent;
@@ -550,46 +561,7 @@ export function View({
   }, [registerBook]);
 
   return (
-    <GestureHandler
-      width={width}
-      height={height}
-      onSingleTap={() => {}}
-      onDoubleTap={() => {}}
-      onLongPress={() => {
-        onLongPress();
-        eventEmitter.trigger(EventType.OnLongPress);
-      }}
-      onSwipeLeft={() => {
-        if (enableSwipe) {
-          goNext({
-            keepScrollOffset: keepScrollOffsetOnLocationChange,
-          });
-          eventEmitter.trigger(EventType.OnSwipeLeft);
-          onSwipeLeft();
-        }
-      }}
-      onSwipeRight={() => {
-        if (enableSwipe) {
-          goPrevious({
-            keepScrollOffset: keepScrollOffsetOnLocationChange,
-          });
-          eventEmitter.trigger(EventType.OnSwipeRight);
-          onSwipeRight();
-        }
-      }}
-      onSwipeUp={() => {
-        if (enableSwipe) {
-          eventEmitter.trigger(EventType.OnSwipeUp);
-          onSwipeUp();
-        }
-      }}
-      onSwipeDown={() => {
-        if (enableSwipe) {
-          eventEmitter.trigger(EventType.OnSwipeDown);
-          onSwipeDown();
-        }
-      }}
-    >
+    <RNView style={{ flex: 1 }}>
       {isRendering && (
         <RNView
           style={{
@@ -632,6 +604,6 @@ export function View({
           height,
         }}
       />
-    </GestureHandler>
+    </RNView>
   );
 }

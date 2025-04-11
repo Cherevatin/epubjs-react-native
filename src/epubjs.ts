@@ -644,6 +644,9 @@ export default `
             UNSELECTED: "unselected",
             LINK_CLICKED: "linkClicked",
             FOOTNOTE_CLICKED: "footnoteClicked",
+            SWIPE_RIGHT: "swipeRight",
+            SWIPE_LEFT: "swipeLeft",
+            LONG_PRESS: "longPress",
           },
           LOCATIONS: { CHANGED: "changed" },
           MANAGERS: {
@@ -683,6 +686,9 @@ export default `
             LAYOUT: "layout",
             SCROLL: "scroll",
             FOOTNOTE_CLICKED: "footnoteClicked",
+            SWIPE_RIGHT: "swipeRight",
+            SWIPE_LEFT: "swipeLeft",
+            LONG_PRESS: "longPress",
           },
           LAYOUT: { UPDATED: "updated" },
           ANNOTATION: { ATTACH: "attach", DETACH: "detach" },
@@ -3888,7 +3894,54 @@ export default `
             (this._triggerEvent = void 0));
         }
         triggerEvent(t) {
-          this.emit(t.type, t);
+          switch (t.type) {
+            case "touchstart":
+              this.handleTouchStart(t);
+              break;
+            case "touchend":
+              this.handleTouchEnd(t);
+              break;
+            case "touchmove":
+              this.handleTouchMove(t);
+              break;
+            default:
+              this.emit(t.type, t);
+              break;
+          }
+        }
+        handleTouchStart(e) {
+          const touch = e.touches[0];
+          this.touchStartX = touch.clientX;
+          this.touchStartY = touch.clientY;
+          this.longPressTimer = setTimeout(() => {
+            this.emit(l.c.CONTENTS.LONG_PRESS);
+            this.longPressTimer = null;
+          }, 600)
+        }
+        handleTouchMove(e) {
+          const touch = e.touches[0];
+          const deltaX = Math.abs(touch.clientX - this.touchStartX);
+          const deltaY = Math.abs(touch.clientY - this.touchStartY);
+          if (deltaX > 10 || deltaY > 10) {
+            clearTimeout(this.longPressTimer);
+            this.longPressTimer = null;
+          }
+        }
+        handleTouchEnd(e) {
+          if (this.longPressTimer) {
+            clearTimeout(this.longPressTimer);
+            this.longPressTimer = null;
+          }
+          const touch = e.changedTouches[0];
+          const deltaX = touch.clientX - this.touchStartX;
+          const deltaY = touch.clientY - this.touchStartY;
+          if (Math.abs(deltaX) > 30 && Math.abs(deltaY) < 100) {
+            if (deltaX > 0) {
+              this.emit(l.c.CONTENTS.SWIPE_RIGHT);
+            } else {
+              this.emit(l.c.CONTENTS.SWIPE_LEFT);
+            }
+          }
         }
         addSelectionListeners() {
           this.document &&
@@ -5219,6 +5272,9 @@ export default `
           }),
             t.on(l.c.CONTENTS.SELECTED, (e) => this.triggerSelectedEvent(e, t));
             t.on(l.c.CONTENTS.UNSELECTED, (e) => this.triggerUnselectedEvent());
+            t.on(l.c.CONTENTS.SWIPE_RIGHT, (e) => this.emit(l.c.RENDITION.SWIPE_RIGHT));
+            t.on(l.c.CONTENTS.SWIPE_LEFT, (e) => this.emit(l.c.RENDITION.SWIPE_LEFT));
+            t.on(l.c.CONTENTS.LONG_PRESS, (e) => this.emit(l.c.RENDITION.LONG_PRESS));
         }
         triggerViewEvent(t, e) {
           this.emit(t.type, t, e);
