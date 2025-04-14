@@ -3935,7 +3935,7 @@ export default `
           const touch = e.changedTouches[0];
           const deltaX = touch.clientX - this.touchStartX;
           const deltaY = touch.clientY - this.touchStartY;
-          if (Math.abs(deltaX) > 30 && Math.abs(deltaY) < 100) {
+          if (Math.abs(deltaX) > 30 && Math.abs(deltaY) < 30) {
             if (deltaX > 0) {
               this.emit(l.c.CONTENTS.SWIPE_RIGHT);
             } else {
