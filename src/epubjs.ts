@@ -4179,20 +4179,131 @@ export default `
             t.push(e.getBoundingClientRect()), (e = e.nextSibling);
           return t;
         }
+        mergeHorizontal() {
+            if (!this.range) {
+                return [];
+            }
+
+            let rects = Array.from(this.range.getClientRects());
+
+            if (this.iframe) {
+                rects = rects.filter(rect => {
+                    const el = this.iframe.contentDocument.elementFromPoint(rect.left + 1, rect.top + 1);
+                    return !el.closest('.page-line-container');
+                });
+            }
+
+            const grouped = [];
+            const tolerance = 10;
+            rects.forEach((rect) => {
+                const group = grouped.find(
+                    (g) => Math.abs(g.top - rect.top) <= tolerance
+                );
+                if (group) {
+                    group.rects.push(rect);
+                    group.top = Math.min(group.top, rect.top);
+                } else {
+                    grouped.push({
+                        top: rect.top,
+                        rects: [rect]
+                    });
+                }
+            });
+            return grouped.map((group) => {
+                const {
+                    rects
+                } = group;
+                const left = Math.min(...rects.map((r) => r.left));
+                const right = Math.max(...rects.map((r) => r.right));
+                const top = Math.min(...rects.map((r) => r.top));
+                const bottom = Math.max(...rects.map((r) => r.bottom));
+                return {
+                    left,
+                    top,
+                    right,
+                    bottom,
+                    width: right - left,
+                    height: bottom - top,
+                };
+            });
+        }
+
+        mergeVertical() {
+            const rects = this.mergeHorizontal().sort((a, b) => a.top - b.top);
+            const maxGap = 12
+            if (rects.length <= 2) return rects;
+
+            const result = [];
+            result.push(rects[0]);
+
+            let current = {
+                ...rects[1]
+            };
+            for (let i = 2; i < rects.length - 1; i++) {
+                const next = rects[i];
+                const verticalGap = next.top - current.bottom;
+
+                if (verticalGap <= maxGap) {
+                    current = {
+                        left: Math.min(current.left, next.left),
+                        top: Math.min(current.top, next.top),
+                        right: Math.max(current.right, next.right),
+                        bottom: Math.max(current.bottom, next.bottom),
+                        width: Math.max(current.right, next.right) - Math.min(current.left, next.left),
+                        height: Math.max(current.bottom, next.bottom) - Math.min(current.top, next.top),
+                    };
+                } else {
+                    result.push(current);
+                    current = {
+                        ...next
+                    };
+                }
+            }
+
+            result.push(current);
+            result.push(rects[rects.length - 1]);
+            return result;
+        }
+
         filteredRanges() {
-          if (!this.range) return [];
-          const t = Array.from(this.range.getClientRects()).map((t) =>
-              JSON.stringify(t),
-            ),
-            e = new Set(t);
-          return Array.from(e).map((t) => JSON.parse(t));
+            return this.mergeHorizontal();
+            // other style option
+            const rects = this.mergeVertical();
+            if (!rects || rects.length === 0) return [];
+
+            rects.sort((a, b) => a.top - b.top);
+
+            const minLeft = Math.min(...rects.map(r => r.left));
+            const maxRight = Math.max(...rects.map(r => r.right));
+            for (let i = 0; i < rects.length; i++) {
+                const r = rects[i];
+
+                if (i === 0) {
+                    r.right = maxRight - (r.left);
+                    r.width = maxRight - (r.left)
+                    continue;
+                }
+
+                if (i === rects.length - 1) {
+                    r.width = r.left - minLeft + r.width;
+                    r.left = minLeft;
+                    continue;
+                }
+
+                r.left = minLeft;
+                r.right = maxRight;
+                r.width = maxRight - minLeft;
+            }
+
+            return rects;
         }
       }
       e.Mark = o;
       class a extends o {
-        constructor(t, e, i, n) {
+        constructor(t, e, i, n, iframe) {
           super(),
             (this.range = t),
+            (this.iframe = iframe),
             (this.className = e),
             (this.data = i || {}),
             (this.attributes = n || {});
@@ -4207,6 +4318,8 @@ export default `
           this.className && this.element.classList.add(this.className);
         }
         render() {
+          const paddingVertical = 3;
+          const radius = 5;
           for (; this.element.firstChild; )
             this.element.removeChild(this.element.firstChild);
           for (
@@ -4222,10 +4335,13 @@ export default `
             var a = e[s],
               h = n.default.createElement("rect");
             h.setAttribute("x", a.left - i.left + r.left),
-              h.setAttribute("y", a.top - i.top + r.top),
+              h.setAttribute("y", a.top - i.top + r.top - paddingVertical),
+              h.setAttribute("height", a.height + paddingVertical * 2),
               h.setAttribute("height", a.height),
               h.setAttribute("width", a.width),
               h.setAttribute("fill", this.attributes.fill),
+              h.setAttribute('rx', radius),
+              h.setAttribute('ry', radius),
               h.setAttribute("fill-opacity", this.attributes["fill-opacity"]),
               t.appendChild(h);
           }
@@ -4234,8 +4350,9 @@ export default `
       }
       e.Highlight = a;
       e.Underline = class extends a {
-        constructor(t, e, i, n) {
+        constructor(t, e, i, n, iframe) {
           super(t, e, i, n);
+          this.iframe = iframe;
         }
         render() {
           for (; this.element.firstChild; )
@@ -4289,6 +4406,9 @@ export default `
               t.appendChild(d);
           }
           this.element.appendChild(t);
+        }
+        filteredRanges() {
+          return this.mergeHorizontal();
         }
       };
     },
@@ -5943,7 +6063,7 @@ export default `
             };
           (e.epubcfi = t),
             this.pane || (this.pane = new l.Pane(this.iframe, this.element));
-          let u = new l.Highlight(a, n, e, o),
+          let u = new l.Highlight(a, n, e, o, this.iframe),
             d = this.pane.addMark(u);
           return (
             (this.highlights[t] = {
@@ -5974,7 +6094,7 @@ export default `
             };
           (e.epubcfi = t),
             this.pane || (this.pane = new l.Pane(this.iframe, this.element));
-          let u = new l.Underline(a, n, e, o),
+          let u = new l.Underline(a, n, e, o, this.iframe),
             d = this.pane.addMark(u);
           return (
             (this.underlines[t] = {

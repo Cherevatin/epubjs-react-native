@@ -39,6 +39,12 @@ export default `
         cursor: pointer;
         margin-left: 0;
       }
+
+      iframe {
+        position: relative;
+        z-index: 1;
+      }
+        
     </style>
   </head>
 
