@@ -4337,7 +4337,6 @@ export default `
             h.setAttribute("x", a.left - i.left + r.left),
               h.setAttribute("y", a.top - i.top + r.top - paddingVertical),
               h.setAttribute("height", a.height + paddingVertical * 2),
-              h.setAttribute("height", a.height),
               h.setAttribute("width", a.width),
               h.setAttribute("fill", this.attributes.fill),
               h.setAttribute('rx', radius),
