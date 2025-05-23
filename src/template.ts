@@ -378,7 +378,7 @@ export default `
             reactNativeWebview.postMessage(JSON.stringify({
               type: 'onSelected',
               cfiRange: cfiRange,
-              text: ${cleanText('range.toString()')},
+              text: cleanText(range.toString()),
             }));
           }
         });
