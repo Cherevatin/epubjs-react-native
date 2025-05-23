@@ -5,6 +5,7 @@ import {
   AnnotationType,
   ePubCfi,
 } from '../types';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { cleanText } from './cleanText';
 
 export function injectJavaScript(

@@ -1,4 +1,5 @@
 import * as webViewJavaScriptFunctions from './utils/webViewInjectFunctions';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { cleanText } from './utils/cleanText';
 
 export default `
@@ -414,10 +415,6 @@ export default `
           layout: layout,
         }));
       });
-
-      function cleanText(text){
-        return text.replace(/[\\r\\n]*\\d*[\\r\\n]+/g, ' ').replace(/\\s+/g, ' ').trim();
-      }
     </script>
   </body>
 </html>

@@ -1,6 +1,6 @@
 import { DimensionValue, ViewStyle } from 'react-native';
-import { SourceType } from './utils/enums/source-type.enum';
 import { WebViewCustomMenuItems } from 'react-native-webview/lib/WebViewTypes';
+import { SourceType } from './utils/enums/source-type.enum';
 
 export type PaginateOptions = {
   keepScrollOffset?: boolean;
