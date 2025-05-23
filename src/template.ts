@@ -1,4 +1,5 @@
 import * as webViewJavaScriptFunctions from './utils/webViewInjectFunctions';
+import { cleanText } from './utils/cleanText';
 
 export default `
 <!DOCTYPE html>
@@ -377,7 +378,7 @@ export default `
             reactNativeWebview.postMessage(JSON.stringify({
               type: 'onSelected',
               cfiRange: cfiRange,
-              text: cleanText(range.toString()),
+              text: ${cleanText('range.toString()')},
             }));
           }
         });
@@ -392,11 +393,10 @@ export default `
       rendition.on("markClicked", function (cfiRange, contents) {
         const annotations = Object.values(rendition.annotations._annotations);
         const annotation = annotations.find(item => item.cfiRange === cfiRange);
-        const annotationObject = ${webViewJavaScriptFunctions.mapObjectToAnnotation('annotation')}
         if (annotation) {
           reactNativeWebview.postMessage(JSON.stringify({
             type: 'onPressAnnotation',
-            annotation: {...annotationObject, cfiRangeText: cleanText(annotationObject.cfiRangeText)}
+            annotation: ${webViewJavaScriptFunctions.mapObjectToAnnotation('annotation')}
           }));
         }
       });
