@@ -377,7 +377,7 @@ export default `
             reactNativeWebview.postMessage(JSON.stringify({
               type: 'onSelected',
               cfiRange: cfiRange,
-              text: range.toString(),
+              text: cleanText(range.toString()),
             }));
           }
         });
@@ -392,11 +392,11 @@ export default `
       rendition.on("markClicked", function (cfiRange, contents) {
         const annotations = Object.values(rendition.annotations._annotations);
         const annotation = annotations.find(item => item.cfiRange === cfiRange);
-        
+        const annotationObject = ${webViewJavaScriptFunctions.mapObjectToAnnotation('annotation')}
         if (annotation) {
           reactNativeWebview.postMessage(JSON.stringify({
             type: 'onPressAnnotation',
-            annotation: ${webViewJavaScriptFunctions.mapObjectToAnnotation('annotation')}
+            annotation: {...annotationObject, cfiRangeText: cleanText(annotationObject.cfiRangeText)}
           }));
         }
       });
@@ -414,6 +414,10 @@ export default `
           layout: layout,
         }));
       });
+
+      function cleanText(text){
+        return text.replace(/[\\r\\n]*\\d*[\\r\\n]+/g, ' ').replace(/\\s+/g, ' ').trim();
+      }
     </script>
   </body>
 </html>
