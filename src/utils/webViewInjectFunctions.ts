@@ -5,8 +5,6 @@ import {
   AnnotationType,
   ePubCfi,
 } from '../types';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { cleanText } from './cleanText';
 
 export function injectJavaScript(
   ref: React.MutableRefObject<WebView | null>,
@@ -53,7 +51,7 @@ export function mapObjectToAnnotation(objectName = 'annotation') {
     data: ${objectName}.data,
     cfiRange: ${objectName}.cfiRange,
     sectionIndex: ${objectName}.sectionIndex,
-    cfiRangeText: cleanText(${objectName}?.cfiRangeText ?? ${objectName}.mark?.range?.toString()),
+    cfiRangeText: ${objectName}?.cfiRangeText ? ${objectName}.cfiRangeText : ${objectName}.mark?.range?.toString(),
     iconClass: ${objectName}.data?.iconClass,
     styles: ${objectName}.type !== 'mark' ? {
       color: ${objectName}.styles?.fill || ${objectName}.mark?.attributes?.fill || ${objectName}.mark?.attributes?.stroke || ${objectName}.styles?.color,

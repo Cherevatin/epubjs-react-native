@@ -1,6 +1,4 @@
 import * as webViewJavaScriptFunctions from './utils/webViewInjectFunctions';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { cleanText } from './utils/cleanText';
 
 export default `
 <!DOCTYPE html>
@@ -144,7 +142,7 @@ export default `
             }
             
             entries.forEach(entry => {
-              const number = entry?.target?.textContent?.trim();
+              const number = entry?.target?.dataset?.pageNumber;
               if(direction === 'DOWN' && entry.intersectionRect.y !== 0){
                 reactNativeWebview.postMessage(JSON.stringify({
                   type: "onPageComplete",
@@ -159,7 +157,7 @@ export default `
             rootMargin: margin.top + 'px ' + margin.right + 'px ' + margin.bottom + 'px ' + margin.left + 'px'
           }
         );
-        iframeDoc.querySelectorAll(".page-number").forEach((element) => {
+        iframeDoc.querySelectorAll(".page-end-line").forEach((element) => {
           completePageObserver.observe(element);
         });
       }
@@ -379,7 +377,7 @@ export default `
             reactNativeWebview.postMessage(JSON.stringify({
               type: 'onSelected',
               cfiRange: cfiRange,
-              text: cleanText(range.toString()),
+              text: range.toString(),
             }));
           }
         });

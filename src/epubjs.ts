@@ -4188,11 +4188,12 @@ export default `
 
             if (this.iframe) {
                 rects = rects.filter(rect => {
-                    const el = this.iframe.contentDocument.elementFromPoint(rect.left + 1, rect.top + 1);
-                    return !el.closest('.page-line-container');
+                  const el = this.iframe.contentDocument.elementFromPoint(rect.left + 1, rect.top + 1)
+                  const target = el.closest('*')
+                  return target && target.textContent.trim() !== ''
                 });
             }
-
+      
             const grouped = [];
             const tolerance = 10;
             rects.forEach((rect) => {
