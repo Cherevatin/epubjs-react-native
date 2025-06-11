@@ -216,7 +216,7 @@ export type SearchOptions = {
   /**
    * Example: toc-introduction_001
    */
-  sectionId?: string;
+  sectionIds?: string[];
 };
 
 export type LoadingFileProps = {
