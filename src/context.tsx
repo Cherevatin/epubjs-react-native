@@ -920,7 +920,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       const page = ${page || 1};
       const limit = ${limit || 20};
       const term = ${JSON.stringify(term)};
-      const chapterId = ${JSON.stringify(options?.sectionId)};
+      const sectionIds = ${JSON.stringify(options?.sectionIds ?? [])};
       const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView: window;
       if (!term) {
         reactNativeWebview.postMessage(
@@ -941,8 +941,8 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
               if (results.length > 0) {
                 results = results.map(result => ({ ...result, section: { ...match, index: book.navigation.toc.findIndex(elem => elem.id === match?.id) } }));
 
-                if (chapterId) {
-                  results = results.filter(result => result.section.id === chapterId);
+                if (sectionIds.length > 0) {
+                  results = results.filter(result => sectionIds.includes(result.section.id));
                 }
               }
 
