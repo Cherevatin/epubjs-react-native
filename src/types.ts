@@ -63,7 +63,6 @@ export type AnnotationStyles = {
   color?: string;
   /**
    * Change the annotation opacity.
-   * Only for `highlight` and `underline` type.
    *
    * Example: `0.5`. Default is `0.3`
    */
