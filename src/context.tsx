@@ -862,15 +862,10 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
   const goToLocation = useCallback(
     (targetCfi: ePubCfi, scrollOffset?: number) => {
       book.current?.injectJavaScript(`
-      (() => {
-        const offset = '${scrollOffset}';
-        rendition.display('${targetCfi}')
-          .then(() => {
-            if (offset) {
-              rendition.moveTo({ top: rendition.manager.container.scrollTop + offset, left: 0 });
-            }
-          });
-      })();
+      rendition.display('${targetCfi}')
+        .then(() => {
+            rendition.moveTo({ top: rendition.manager.container.scrollTop + (${scrollOffset} ?? 0), left: 0 });
+        });
       true;
     `);
     },
