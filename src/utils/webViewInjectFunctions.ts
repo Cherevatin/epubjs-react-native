@@ -23,26 +23,28 @@ export function injectJavaScript(
 
 export function mapAnnotationStylesToEpubStyles(
   type: AnnotationType,
-  styles?: AnnotationStyles
-) {
-  let epubStyles: { [key: string]: unknown } = {};
+  styles: AnnotationStyles = {}
+): Record<string, unknown> {
+  const { color = 'yellow', opacity = 0.3, thickness = 1 } = styles;
 
-  if (type === 'highlight') {
-    epubStyles = {
-      'fill': styles?.color || 'yellow',
-      'fill-opacity': styles?.opacity || 0.3,
-    };
+  switch (type) {
+    case 'highlight':
+    case 'mark':
+      return {
+        'fill': color,
+        'fill-opacity': opacity,
+      };
+
+    case 'underline':
+      return {
+        'stroke': color,
+        'stroke-opacity': opacity,
+        'stroke-width': thickness,
+      };
+
+    default:
+      return {};
   }
-
-  if (type === 'underline') {
-    epubStyles = {
-      'stroke': styles?.color || 'yellow',
-      'stroke-opacity': styles?.opacity || 0.3,
-      'stroke-width': styles?.thickness || 1,
-    };
-  }
-
-  return epubStyles;
 }
 
 export function mapObjectToAnnotation(objectName = 'annotation') {
@@ -53,11 +55,11 @@ export function mapObjectToAnnotation(objectName = 'annotation') {
     sectionIndex: ${objectName}.sectionIndex,
     cfiRangeText: ${objectName}?.cfiRangeText ? ${objectName}.cfiRangeText : ${objectName}.mark?.range?.toString(),
     iconClass: ${objectName}.data?.iconClass,
-    styles: ${objectName}.type !== 'mark' ? {
+    styles: {
       color: ${objectName}.styles?.fill || ${objectName}.mark?.attributes?.fill || ${objectName}.mark?.attributes?.stroke || ${objectName}.styles?.color,
       opacity: Number(${objectName}.styles?.['fill-opacity'] || ${objectName}.mark?.attributes?.['fill-opacity'] || ${objectName}.mark?.attributes?.['stroke-opacity'] || ${objectName}.styles?.opacity),
       thickness: Number(${objectName}.styles?.['stroke-width'] || ${objectName}.mark?.attributes?.['stroke-width'] || ${objectName}.styles?.thickness),
-    } : undefined
+    }
   }`;
 }
 
@@ -94,11 +96,6 @@ export function addAnnotation(
 ) {
   const epubStyles = mapAnnotationStylesToEpubStyles(type, styles);
 
-  if (type === 'mark') {
-    // eslint-disable-next-line no-param-reassign
-    iconClass = iconClass || 'epubjs-mk-balloon';
-  }
-
   return `
     const annotation = rendition.annotations.add('${type}', ${JSON.stringify(cfiRange)}, ${JSON.stringify(
       data ?? {}
@@ -126,11 +123,6 @@ export function addAnnotationByTagId(
   noEmit = false
 ) {
   const epubStyles = mapAnnotationStylesToEpubStyles(type, styles);
-
-  if (type === 'mark') {
-    // eslint-disable-next-line no-param-reassign
-    iconClass = iconClass || 'epubjs-mk-balloon';
-  }
 
   return `
     async function addAnnotationByTagId(tagId) {
@@ -243,7 +235,7 @@ export function updateAnnotationByTagId(
           let epubStyles = {};
           const styles = ${JSON.stringify(styles)};
 
-          if (annotation.type === 'highlight') {
+          if (annotation.type === 'highlight' || annotation.type === 'mark') {
             epubStyles = {
               'fill': styles?.color || 'yellow',
               'fill-opacity': styles?.opacity || 0.3,

@@ -147,9 +147,9 @@ export function Reader({
         }
 
         if (isExternalSource) {
-          const sourceName = getSourceName(source);
+          const externalSourceName = getSourceName(source);
 
-          if (!offlineAccess && !sourceName) {
+          if (!offlineAccess && !externalSourceName) {
             throw new Error(`Invalid source name: ${source}`);
           }
 

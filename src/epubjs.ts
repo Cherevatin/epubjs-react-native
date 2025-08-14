@@ -4157,17 +4157,80 @@ export default `
         }
       };
       class o {
-        constructor() {
-          this.element = null;
+        constructor(t, e, i, n, iframe) {
+          (this.element = null),
+          (this.range = t),
+          (this.iframe = iframe),
+          (this.className = e),
+          (this.data = i || {}),
+          (this.attributes = n || {});
         }
         bind(t, e) {
-          (this.element = t), (this.container = e);
+          for (var i in (this.element = t, this.container = e, this.data))
+            this.data.hasOwnProperty(i) &&
+              (this.element.dataset[i] = this.data[i]);
+
+          for (var i in this.attributes)
+            this.attributes.hasOwnProperty(i) &&
+              this.element.setAttribute(i, this.attributes[i]);
+
+          this.className && this.element.classList.add(this.className);
         }
         unbind() {
           var t = this.element;
           return (this.element = null), t;
         }
-        render() {}
+        render() {
+          const marginLeft = 4;
+
+          while (this.element.firstChild) {
+            this.element.removeChild(this.element.firstChild);
+          }
+
+          const fragment = this.element.ownerDocument.createDocumentFragment();
+          const rects = this.filteredRanges();
+          const elementRect = this.element.getBoundingClientRect();
+          const containerRect = this.container.getBoundingClientRect();
+
+          for (let i = 0; i < rects.length; i++) {
+            const rect = rects[i];
+
+            const x = rect.left - marginLeft;
+            const y = rect.top - elementRect.top + containerRect.top;
+            const height = rect.height;
+
+            if (i === rects.length - 1) {
+              const svgNS = "http://www.w3.org/2000/svg";
+              const svg = this.element.ownerDocument.createElementNS(svgNS, "svg");
+              svg.setAttribute("x", x);
+              svg.setAttribute("y", y);
+              svg.setAttribute("width", "20");
+              svg.setAttribute("height", "20");
+              svg.setAttribute("viewBox", "0 0 24 24");
+
+              const path = this.element.ownerDocument.createElementNS(svgNS, "path");
+              path.setAttribute(
+                "d",
+                "M6 2H18C18.55 2 19 2.45 19 3V21L12 17L5 21V3C5 2.45 5.45 2 6 2Z"
+              );
+              path.setAttribute("fill", this.attributes.fill);
+
+              svg.appendChild(path);
+
+              const hitBox = this.element.ownerDocument.createElementNS(svgNS, "rect");
+              hitBox.setAttribute("x", "0");
+              hitBox.setAttribute("y", "0");
+              hitBox.setAttribute("width", "30");
+              hitBox.setAttribute("height", "30");
+              hitBox.setAttribute("fill", "transparent");
+
+              svg.appendChild(hitBox);
+
+              fragment.appendChild(svg);
+            } 
+          }
+          this.element.appendChild(fragment);
+        }
         dispatchEvent(t) {
           this.element && this.element.dispatchEvent(t);
         }
@@ -4179,23 +4242,130 @@ export default `
             t.push(e.getBoundingClientRect()), (e = e.nextSibling);
           return t;
         }
+        mergeHorizontal() {
+            if (!this.range) {
+                return [];
+            }
+
+            let rects = Array.from(this.range.getClientRects());
+
+            if (this.iframe) {
+                rects = rects.filter(rect => {
+                  const el = this.iframe.contentDocument.elementFromPoint(rect.left + 1, rect.top + 1)
+                  const target = el.closest('*')
+                  return target && target.textContent.trim() !== ''
+                });
+            }
+      
+            const grouped = [];
+            const tolerance = 10;
+            rects.forEach((rect) => {
+                const group = grouped.find(
+                    (g) => Math.abs(g.top - rect.top) <= tolerance
+                );
+                if (group) {
+                    group.rects.push(rect);
+                    group.top = Math.min(group.top, rect.top);
+                } else {
+                    grouped.push({
+                        top: rect.top,
+                        rects: [rect]
+                    });
+                }
+            });
+            return grouped.map((group) => {
+                const {
+                    rects
+                } = group;
+                const left = Math.min(...rects.map((r) => r.left));
+                const right = Math.max(...rects.map((r) => r.right));
+                const top = Math.min(...rects.map((r) => r.top));
+                const bottom = Math.max(...rects.map((r) => r.bottom));
+                return {
+                    left,
+                    top,
+                    right,
+                    bottom,
+                    width: right - left,
+                    height: bottom - top,
+                };
+            });
+        }
+
+        mergeVertical() {
+            const rects = this.mergeHorizontal().sort((a, b) => a.top - b.top);
+            const maxGap = 12
+            if (rects.length <= 2) return rects;
+
+            const result = [];
+            result.push(rects[0]);
+
+            let current = {
+                ...rects[1]
+            };
+            for (let i = 2; i < rects.length - 1; i++) {
+                const next = rects[i];
+                const verticalGap = next.top - current.bottom;
+
+                if (verticalGap <= maxGap) {
+                    current = {
+                        left: Math.min(current.left, next.left),
+                        top: Math.min(current.top, next.top),
+                        right: Math.max(current.right, next.right),
+                        bottom: Math.max(current.bottom, next.bottom),
+                        width: Math.max(current.right, next.right) - Math.min(current.left, next.left),
+                        height: Math.max(current.bottom, next.bottom) - Math.min(current.top, next.top),
+                    };
+                } else {
+                    result.push(current);
+                    current = {
+                        ...next
+                    };
+                }
+            }
+
+            result.push(current);
+            result.push(rects[rects.length - 1]);
+            return result;
+        }
+
         filteredRanges() {
           if (!this.range) return [];
-          const t = Array.from(this.range.getClientRects()).map((t) =>
-              JSON.stringify(t),
-            ),
-            e = new Set(t);
-          return Array.from(e).map((t) => JSON.parse(t));
+
+          let rects = Array.from(this.range.getClientRects());
+
+          if (this.iframe) {
+            rects = rects.filter(rect => {
+              const el = this.iframe.contentDocument.elementFromPoint(rect.left + 1, rect.top + 1);
+              const target = el.closest('*');
+              return target && target.textContent.trim() !== '';
+            });
+          }
+
+          if (rects.length === 0) return [];
+
+          const offset = -7;
+          const stripeWidth = 7;
+          const lastRect = rects[rects.length - 1];
+
+          const stripe = {
+            left: lastRect.right - offset - stripeWidth,
+            top: lastRect.top,
+            width: stripeWidth,
+            height: lastRect.height,
+            right: lastRect.right - offset,
+            bottom: lastRect.bottom,
+          };
+
+          return [stripe];
         }
+
+
       }
       e.Mark = o;
       class a extends o {
-        constructor(t, e, i, n) {
-          super(),
-            (this.range = t),
-            (this.className = e),
-            (this.data = i || {}),
-            (this.attributes = n || {});
+        constructor(t, e, i, n, iframe) {
+          super(t, e, i, n, iframe)
         }
         bind(t, e) {
           for (var i in (super.bind(t, e), this.data))
@@ -4207,6 +4377,8 @@ export default `
           this.className && this.element.classList.add(this.className);
         }
         render() {
+          const paddingVertical = 3;
+          const radius = 5;
           for (; this.element.firstChild; )
             this.element.removeChild(this.element.firstChild);
           for (
@@ -4222,20 +4394,55 @@ export default `
             var a = e[s],
               h = n.default.createElement("rect");
             h.setAttribute("x", a.left - i.left + r.left),
-              h.setAttribute("y", a.top - i.top + r.top),
-              h.setAttribute("height", a.height),
+              h.setAttribute("y", a.top - i.top + r.top - paddingVertical),
+              h.setAttribute("height", a.height + paddingVertical * 2),
               h.setAttribute("width", a.width),
               h.setAttribute("fill", this.attributes.fill),
+              h.setAttribute('rx', radius),
+              h.setAttribute('ry', radius),
               h.setAttribute("fill-opacity", this.attributes["fill-opacity"]),
               t.appendChild(h);
           }
           this.element.appendChild(t);
         }
+        
+        filteredRanges() {
+          return this.mergeHorizontal();
+          // other style option
+          const rects = this.mergeVertical();
+          if (!rects || rects.length === 0) return [];
+
+          rects.sort((a, b) => a.top - b.top);
+
+          const minLeft = Math.min(...rects.map(r => r.left));
+          const maxRight = Math.max(...rects.map(r => r.right));
+          for (let i = 0; i < rects.length; i++) {
+              const r = rects[i];
+
+              if (i === 0) {
+                  r.right = maxRight - (r.left);
+                  r.width = maxRight - (r.left)
+                  continue;
+              }
+
+              if (i === rects.length - 1) {
+                  r.width = r.left - minLeft + r.width;
+                  r.left = minLeft;
+                  continue;
+              }
+
+              r.left = minLeft;
+              r.right = maxRight;
+              r.width = maxRight - minLeft;
+          }
+
+          return rects;
+        }
       }
       e.Highlight = a;
       e.Underline = class extends a {
-        constructor(t, e, i, n) {
-          super(t, e, i, n);
+        constructor(t, e, i, n, iframe) {
+          super(t, e, i, n, iframe);
         }
         render() {
           for (; this.element.firstChild; )
@@ -4289,6 +4496,9 @@ export default `
               t.appendChild(d);
           }
           this.element.appendChild(t);
+        }
+        filteredRanges() {
+          return this.mergeHorizontal();
         }
       };
     },
@@ -4798,8 +5008,8 @@ export default `
           underline(t, e, i, n, r, s) {
             return this.add("underline", t, i, n, r, s, e);
           }
-          mark(t, e, i, n) {
-            return this.add("mark", t, e, i, n);
+          mark(t, e, i, n, r, s) {
+            return this.add("mark", t, i, n, r, s, e);
           }
           each() {
             return [...this.highlights, ...this.underlines, ...this.marks];
@@ -5770,12 +5980,6 @@ export default `
               heightDelta: this.prevBounds ? e - this.prevBounds.height : e,
             }),
             this.pane && this.pane.render(),
-            requestAnimationFrame(() => {
-              let t;
-              for (let e in this.marks)
-                this.marks.hasOwnProperty(e) &&
-                  ((t = this.marks[e]), this.placeMark(t.element, t.range));
-            }),
             this.onResize(this, i),
             this.emit(h.c.VIEWS.RESIZED, i),
             (this.prevBounds = i),
@@ -5943,7 +6147,7 @@ export default `
             };
           (e.epubcfi = t),
             this.pane || (this.pane = new l.Pane(this.iframe, this.element));
-          let u = new l.Highlight(a, n, e, o),
+          let u = new l.Highlight(a, n, e, o, this.iframe),
             d = this.pane.addMark(u);
           return (
             (this.highlights[t] = {
@@ -5974,7 +6178,7 @@ export default `
             };
           (e.epubcfi = t),
             this.pane || (this.pane = new l.Pane(this.iframe, this.element));
-          let u = new l.Underline(a, n, e, o),
+          let u = new l.Underline(a, n, e, o, this.iframe),
             d = this.pane.addMark(u);
           return (
             (this.underlines[t] = {
@@ -5991,40 +6195,33 @@ export default `
         }
         mark(t, e = {}, i, n = "epubjs-mk", r = {}, s = "") {
           if (!this.contents) return;
-          if (t in this.marks) {
-            return this.marks[t];
-          }
-          let o = this.contents.range(t);
-          if (!o) return;
-          let a = o.commonAncestorContainer,
-            l = 1 === a.nodeType ? a : a.parentNode,
-            c = (i) => {
+          const o = Object.assign(
+            {
+              fill: "yellow",
+              "fill-opacity": "0.3",
+              "mix-blend-mode": "multiply",
+            },
+            r,
+          );
+          let a = this.contents.range(t),
+            c = () => {
               this.emit(h.c.VIEWS.MARK_CLICKED, t, e);
             };
-          o.collapsed && 1 === a.nodeType
-            ? ((o = new Range()), o.selectNodeContents(a))
-            : o.collapsed && ((o = new Range()), o.selectNodeContents(l));
-          let u = this.document.createElement("a");
+          (e.epubcfi = t),
+            this.pane || (this.pane = new l.Pane(this.iframe, this.element));
+          let u = new l.Mark(a, n, e, o, this.iframe),
+            d = this.pane.addMark(u);
           return (
-            u.setAttribute("ref", n),
-            (u.style = r),
-            (u.style.position = "absolute"),
-            (u.dataset.epubcfi = t),
-            e &&
-              Object.keys(e).forEach((t) => {
-                u.dataset[t] = e[t];
-              }),
-            i && u.addEventListener("click", i),
-            u.addEventListener("click", c),
-            this.placeMark(u, o),
-            this.element.appendChild(u),
             (this.marks[t] = {
-              element: u,
-              range: o,
+              mark: d,
+              element: d.element,
               listeners: [c, i],
               cfiRangeText: s,
             }),
-            l
+            d.element.setAttribute("ref", n),
+            d.element.addEventListener("click", c),
+            i && d.element.addEventListener("click", i),
+            d
           );
         }
         placeMark(t, e) {
@@ -6078,7 +6275,7 @@ export default `
           let e;
           t in this.marks &&
             ((e = this.marks[t]),
-            this.element.removeChild(e.element),
+            this.pane.removeMark(e.mark),
             e.listeners.forEach((t) => {
               t &&
                 (e.element.removeEventListener("click", t),

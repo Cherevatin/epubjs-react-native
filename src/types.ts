@@ -1,6 +1,6 @@
 import { DimensionValue, ViewStyle } from 'react-native';
-import { SourceType } from './utils/enums/source-type.enum';
 import { WebViewCustomMenuItems } from 'react-native-webview/lib/WebViewTypes';
+import { SourceType } from './utils/enums/source-type.enum';
 
 export type PaginateOptions = {
   keepScrollOffset?: boolean;
@@ -63,7 +63,6 @@ export type AnnotationStyles = {
   color?: string;
   /**
    * Change the annotation opacity.
-   * Only for `highlight` and `underline` type.
    *
    * Example: `0.5`. Default is `0.3`
    */
@@ -216,7 +215,7 @@ export type SearchOptions = {
   /**
    * Example: toc-introduction_001
    */
-  sectionId?: string;
+  sectionIds?: string[];
 };
 
 export type LoadingFileProps = {

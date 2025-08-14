@@ -39,6 +39,12 @@ export default `
         cursor: pointer;
         margin-left: 0;
       }
+
+      iframe {
+        position: relative;
+        z-index: 1;
+      }
+        
     </style>
   </head>
 
@@ -136,7 +142,7 @@ export default `
             }
             
             entries.forEach(entry => {
-              const number = entry?.target?.textContent?.trim();
+              const number = entry?.target?.dataset?.pageNumber;
               if(direction === 'DOWN' && entry.intersectionRect.y !== 0){
                 reactNativeWebview.postMessage(JSON.stringify({
                   type: "onPageComplete",
@@ -151,7 +157,7 @@ export default `
             rootMargin: margin.top + 'px ' + margin.right + 'px ' + margin.bottom + 'px ' + margin.left + 'px'
           }
         );
-        iframeDoc.querySelectorAll(".page-number").forEach((element) => {
+        iframeDoc.querySelectorAll(".page-end-line").forEach((element) => {
           completePageObserver.observe(element);
         });
       }
@@ -386,7 +392,6 @@ export default `
       rendition.on("markClicked", function (cfiRange, contents) {
         const annotations = Object.values(rendition.annotations._annotations);
         const annotation = annotations.find(item => item.cfiRange === cfiRange);
-        
         if (annotation) {
           reactNativeWebview.postMessage(JSON.stringify({
             type: 'onPressAnnotation',
