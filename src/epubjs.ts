@@ -4182,8 +4182,6 @@ export default `
           return (this.element = null), t;
         }
         render() {
-          const marginLeft = 4;
-
           while (this.element.firstChild) {
             this.element.removeChild(this.element.firstChild);
           }
@@ -4196,7 +4194,7 @@ export default `
           for (let i = 0; i < rects.length; i++) {
             const rect = rects[i];
 
-            const x = rect.left - marginLeft;
+            const x = rect.left;
             const y = rect.top - elementRect.top + containerRect.top;
             const height = rect.height;
 
