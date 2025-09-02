@@ -347,7 +347,7 @@ export interface ReaderContextProps {
    * Go to specific location in the book
    * @param {ePubCfi} target {@link ePubCfi}
    */
-  goToLocation: (cfi: ePubCfi) => void;
+  goToLocation: (cfi: ePubCfi, scrollOffset?: number) => void;
 
   /**
    * Go to previous page in the book
@@ -859,9 +859,18 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: Types.SET_IS_RENDERING, payload: isRendering });
   }, []);
 
-  const goToLocation = useCallback((targetCfi: ePubCfi) => {
-    book.current?.injectJavaScript(`rendition.display('${targetCfi}'); true`);
-  }, []);
+  const goToLocation = useCallback(
+    (targetCfi: ePubCfi, scrollOffset?: number) => {
+      book.current?.injectJavaScript(`
+      rendition.display('${targetCfi}')
+        .then(() => {
+            rendition.moveTo({ top: rendition.manager.container.scrollTop + (${scrollOffset} ?? 0), left: 0 });
+        });
+      true;
+    `);
+    },
+    []
+  );
 
   const goPrevious = useCallback(
     (options?: PaginateOptions) => {

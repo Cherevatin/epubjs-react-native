@@ -164,6 +164,21 @@ export function View({
 
     const { type }: { type: string } = parsedEvent;
 
+    if (type === 'initialLocationLoaded') {
+      const { totalLocations, currentLocation, progress } = parsedEvent;
+
+      if (!waitForLocationsReady) {
+        setIsRendering(false);
+      }
+
+      eventEmitter.trigger(EventType.OnReady, {
+        totalLocations,
+        currentLocation,
+        progress,
+      });
+      return onReady(totalLocations, currentLocation, progress);
+    }
+
     if (!INTERNAL_EVENTS.includes(type) && onWebViewMessage) {
       return onWebViewMessage(parsedEvent);
     }
@@ -193,21 +208,32 @@ export function View({
         currentLocation: Location;
         progress: number;
       } = parsedEvent;
-      if (!waitForLocationsReady) {
-        setIsRendering(false);
-      }
-
       if (initialAnnotations) {
         setInitialAnnotations(initialAnnotations);
-      }
-
-      if (initialLocation) {
-        goToLocation(initialLocation);
       }
 
       if (injectedJavascript) {
         book.current?.injectJavaScript(injectedJavascript);
       }
+
+      if (initialLocation) {
+        book.current?.injectJavaScript(`
+          rendition.display('${initialLocation}')
+          .then(() => {
+            const currentLocation = rendition.currentLocation();
+            const progress = rendition.book.locations.percentageFromCfi(currentLocation.start.cfi)
+            const totalLocations = rendition.book.locations.total;
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'initialLocationLoaded', currentLocation, totalLocations, progress }));
+            });
+        true;
+      `);
+        return () => {};
+      }
+
+      if (!waitForLocationsReady) {
+        setIsRendering(false);
+      }
+
       eventEmitter.trigger(EventType.OnReady, {
         totalLocations,
         currentLocation,
