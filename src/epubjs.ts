@@ -4164,6 +4164,7 @@ export default `
           (this.className = e),
           (this.data = i || {}),
           (this.attributes = n || {});
+          this.markSize = 20;
         }
         bind(t, e) {
           for (var i in (this.element = t, this.container = e, this.data))
@@ -4204,8 +4205,8 @@ export default `
               const svg = this.element.ownerDocument.createElementNS(svgNS, "svg");
               svg.setAttribute("x", x);
               svg.setAttribute("y", y);
-              svg.setAttribute("width", "20");
-              svg.setAttribute("height", "20");
+              svg.setAttribute("width", this.markSize);
+              svg.setAttribute("height", this.markSize);
               svg.setAttribute("viewBox", "0 0 24 24");
 
               const path = this.element.ownerDocument.createElementNS(svgNS, "path");
@@ -4220,8 +4221,8 @@ export default `
               const hitBox = this.element.ownerDocument.createElementNS(svgNS, "rect");
               hitBox.setAttribute("x", "0");
               hitBox.setAttribute("y", "0");
-              hitBox.setAttribute("width", "30");
-              hitBox.setAttribute("height", "30");
+              hitBox.setAttribute("width", this.markSize + 10);
+              hitBox.setAttribute("height", this.markSize + 10);
               hitBox.setAttribute("fill", "transparent");
 
               svg.appendChild(hitBox);
@@ -4344,20 +4345,24 @@ export default `
 
           if (rects.length === 0) return [];
 
-          const offset = -7;
-          const stripeWidth = 7;
-          const lastRect = rects[rects.length - 1];
-
-          const stripe = {
-            left: lastRect.right - offset - stripeWidth,
-            top: lastRect.top,
-            width: stripeWidth,
-            height: lastRect.height,
-            right: lastRect.right - offset,
-            bottom: lastRect.bottom,
+          const firstRect = rects[0];
+          
+          const containerWidth = this.iframe ? this.iframe.offsetWidth : window.innerWidth;
+          const isCloserToLeft = firstRect.left < (containerWidth / 2);
+          
+          const iconOffset = 10;
+          const left = isCloserToLeft ? 0 + iconOffset : containerWidth - iconOffset - this.markSize;
+          
+          const mark = {
+            left,
+            top: firstRect.top,
+            width: this.markSize,
+            height: firstRect.height,
+            right: left + this.markSize,
+            bottom: firstRect.bottom,
           };
 
-          return [stripe];
+          return [mark];
         }
 
 
