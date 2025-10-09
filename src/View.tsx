@@ -256,6 +256,10 @@ export function View({
     }
 
     if (type === 'onLocationChange') {
+      if (initialLocation && isRendering) {
+        return () => {};
+      }
+
       const {
         totalLocations,
         currentLocation,
