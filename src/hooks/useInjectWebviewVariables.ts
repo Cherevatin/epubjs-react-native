@@ -21,6 +21,7 @@ export function useInjectWebViewVariables() {
       spread,
       fullsize,
       charactersPerLocation = 1600,
+      pageCompletionDelay,
     }: {
       jszip: string;
       epubjs: string;
@@ -37,6 +38,7 @@ export function useInjectWebViewVariables() {
       spread?: Spread;
       fullsize?: boolean;
       charactersPerLocation?: number;
+      pageCompletionDelay?: number;
     }) => {
       return template
         .replace(
@@ -77,6 +79,10 @@ export function useInjectWebViewVariables() {
         .replace(
           /book\.locations\.generate\(1600\)/,
           `book.locations.generate(${charactersPerLocation})`
+        )
+        .replace(
+          /const pageCompletionDelay = window.pageCompletionDelay;/,
+          `const pageCompletionDelay = ${pageCompletionDelay ?? 5000};`
         );
     },
     []

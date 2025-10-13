@@ -65,6 +65,7 @@ export function View({
   onSwipeUp = () => {},
   onSwipeDown = () => {},
   onPageComplete = () => {},
+  pageCompletionDelay,
   defaultTheme = initialTheme,
   renderOpeningBookComponent = () => (
     <OpeningBook
@@ -127,6 +128,7 @@ export function View({
     currentLocation: currLoc,
     setIsSearching,
     setFlow,
+    setPageCompletionDelay,
     eventEmitter,
   } = useContext(ReaderContext);
   const book = useRef<WebView>(null);
@@ -138,6 +140,10 @@ export function View({
   useEffect(() => {
     setFlow(flow || 'auto');
   }, [flow, setFlow]);
+
+  useEffect(() => {
+    setPageCompletionDelay(pageCompletionDelay || 5000);
+  }, [pageCompletionDelay, setPageCompletionDelay]);
 
   useEffect(() => {
     if (getInjectionJavascriptFn && book.current) {

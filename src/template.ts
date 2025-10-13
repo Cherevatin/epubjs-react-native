@@ -61,7 +61,9 @@ export default `
       const theme = window.theme;
       const initialLocations = window.locations;
       const enableSelection = window.enable_selection;
-      
+      const pageCompletionDelay = window.pageCompletionDelay;
+      const readPages = new Set();
+
       Object.defineProperty(window, 'margin', {
         get() {
           return _margin;
@@ -126,7 +128,6 @@ export default `
 
       function createObserver(margin) {
         var iframe = document.querySelector("iframe");
-        var container = document.querySelector(".epub-container");
         var iframeDoc = iframe.contentDocument;
         var scrollPos =  0;
         if (completePageObserver) {
@@ -142,12 +143,28 @@ export default `
             }
             
             entries.forEach(entry => {
-              const number = entry?.target?.dataset?.pageNumber;
-              if(direction === 'DOWN' && entry.intersectionRect.y !== 0){
-                reactNativeWebview.postMessage(JSON.stringify({
-                  type: "onPageComplete",
-                  page: Number(number),
-                }));
+              const element = entry.target;
+              const number = element?.dataset?.pageNumber;
+
+              if(!number || readPages.has(number)) return;
+
+              element._isVisible = true;
+              
+              if (direction === 'DOWN' && entry.intersectionRect.y !== 0) {
+                const timer = setTimeout(() => {
+                  if (element._isVisible) {
+                    readPages.add(number);
+                    reactNativeWebview.postMessage(JSON.stringify({
+                      type: "onPageComplete",
+                      page: Number(number),
+                    }));
+                  }
+                }, pageCompletionDelay);
+                element._scrollTimer = timer;
+              } else {
+                element._isVisible = false;
+                readPages.delete(number);
+                clearTimeout(element._scrollTimer);
               }
             })
             scrollPos = iframe.getBoundingClientRect().top

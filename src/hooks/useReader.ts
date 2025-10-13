@@ -26,6 +26,7 @@ export type UseReader = Omit<
   | 'setFlow'
   | 'meta'
   | 'removeAnnotations'
+  | 'setPageCompletionDelay'
 >;
 
 export function useReader(): UseReader {
@@ -82,6 +83,7 @@ export function useReader(): UseReader {
     eventEmitter,
     initPageObserver,
     pageObserverRootMargins,
+    pageCompletionDelay,
   } = context;
 
   return {
@@ -132,5 +134,6 @@ export function useReader(): UseReader {
     eventEmitter,
     initPageObserver,
     pageObserverRootMargins,
+    pageCompletionDelay,
   };
 }

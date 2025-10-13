@@ -33,6 +33,7 @@ export function Reader({
   spread,
   fullsize,
   charactersPerLocation,
+  pageCompletionDelay,
   ...rest
 }: ReaderProps) {
   const {
@@ -117,6 +118,7 @@ export function Reader({
                 spread,
                 fullsize,
                 charactersPerLocation,
+                pageCompletionDelay,
               })
             );
 
@@ -139,6 +141,7 @@ export function Reader({
                 spread,
                 fullsize,
                 charactersPerLocation,
+                pageCompletionDelay,
               })
             );
 
@@ -174,6 +177,7 @@ export function Reader({
                 spread,
                 fullsize,
                 charactersPerLocation,
+                pageCompletionDelay,
               })
             );
 
@@ -208,6 +212,7 @@ export function Reader({
                 spread,
                 fullsize,
                 charactersPerLocation,
+                pageCompletionDelay,
               })
             );
 

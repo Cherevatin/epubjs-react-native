@@ -62,6 +62,7 @@ enum Types {
   SET_IS_BOOKMARKED = 'SET_IS_BOOKMARKED',
   SET_FLOW = 'SET_FLOW',
   SET_PAGE_OBSERVER_MARGIN = 'SET_PAGE_OBSERVER_MARGIN',
+  SET_PAGE_COMPLETION_DELAY = 'SET_PAGE_COMPLETION_DELAY',
 }
 
 type BookPayload = {
@@ -96,6 +97,7 @@ type BookPayload = {
   [Types.SET_IS_BOOKMARKED]: boolean;
   [Types.SET_FLOW]: Flow;
   [Types.SET_PAGE_OBSERVER_MARGIN]: Margins;
+  [Types.SET_PAGE_COMPLETION_DELAY]: number;
 };
 
 type BookActions = ActionMap<BookPayload>[keyof ActionMap<BookPayload>];
@@ -133,6 +135,7 @@ type InitialState = {
   flow: Flow;
   eventEmitter: EventEmitter;
   pageObserverRootMargin: Margins;
+  pageCompletionDelay: number;
 };
 
 export const defaultTheme: Theme = {
@@ -199,6 +202,7 @@ const initialState: InitialState = {
     bottom: 0,
     right: 0,
   },
+  pageCompletionDelay: 5000,
 };
 
 function bookReducer(state: InitialState, action: BookActions): InitialState {
@@ -412,6 +416,8 @@ export interface ReaderContextProps {
    */
   changeTheme: (theme: Theme) => void;
   initPageObserver: ({ top, bottom, left, right }?: Margins) => void;
+  pageCompletionDelay?: number;
+  setPageCompletionDelay: (pageCompletionDelay: number) => void;
 
   /**
    * Change font size of all elements in the book
@@ -735,7 +741,6 @@ const ReaderContext = createContext<ReaderContextProps>({
   landmarks: [],
   bookmarks: [],
   isBookmarked: false,
-
   injectJavascript: () => {},
   changeFlow: () => {},
   setFlow: () => {},
@@ -748,6 +753,8 @@ const ReaderContext = createContext<ReaderContextProps>({
     right: 0,
     left: 0,
   },
+  setPageCompletionDelay: () => {},
+  pageCompletionDelay: 5000,
 });
 
 function ReaderProvider({ children }: { children: React.ReactNode }) {
@@ -1306,6 +1313,17 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: Types.SET_FLOW, payload: flow });
   }, []);
 
+  const setPageCompletionDelay = useCallback((pageCompletionDelay: number) => {
+    dispatch({
+      type: Types.SET_PAGE_COMPLETION_DELAY,
+      payload: pageCompletionDelay,
+    });
+    book.current?.injectJavaScript(`
+        window.pageCompletionDelay = ${pageCompletionDelay};
+        true;
+    `);
+  }, []);
+
   const contextValue = useMemo(
     () => ({
       registerBook,
@@ -1388,6 +1406,8 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       eventEmitter: state.eventEmitter,
       initPageObserver,
       pageObserverRootMargins: state.pageObserverRootMargin,
+      setPageCompletionDelay,
+      pageCompletionDelay: state.pageCompletionDelay,
     }),
     [
       changeFontFamily,
@@ -1460,6 +1480,8 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       state.eventEmitter,
       initPageObserver,
       state.pageObserverRootMargin,
+      setPageCompletionDelay,
+      state.pageCompletionDelay,
     ]
   );
   return (

@@ -539,6 +539,7 @@ export interface ReaderProps {
 
   onPageComplete?: (event: PageCompleteEvent) => void;
 
+  pageCompletionDelay?: number;
   /**
    * Called when footnote ref is pressed
    */
