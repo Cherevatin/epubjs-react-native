@@ -165,11 +165,17 @@ export function View({
     const { type }: { type: string } = parsedEvent;
 
     if (type === 'initialLocationLoaded') {
-      const { totalLocations, currentLocation, progress } = parsedEvent;
+      const { totalLocations, currentLocation, progress, currentSection } =
+        parsedEvent;
 
       if (!waitForLocationsReady) {
         setIsRendering(false);
       }
+
+      setCurrentLocation(currentLocation);
+      setTotalLocations(totalLocations);
+      setProgress(progress);
+      setSection(currentSection);
 
       eventEmitter.trigger(EventType.OnReady, {
         totalLocations,
@@ -223,7 +229,8 @@ export function View({
             const currentLocation = rendition.currentLocation();
             const progress = rendition.book.locations.percentageFromCfi(currentLocation.start.cfi)
             const totalLocations = rendition.book.locations.total;
-            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'initialLocationLoaded', currentLocation, totalLocations, progress }));
+            const currentSection = rendition.book.getChapterFromLocation(currentLocation);
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'initialLocationLoaded', currentLocation, totalLocations, progress, currentSection }));
             });
         true;
       `);

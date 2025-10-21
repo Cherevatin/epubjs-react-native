@@ -100,30 +100,7 @@ export default `
       function flatten(chapters) {
         return [].concat.apply([], chapters.map((chapter) => [].concat.apply([chapter], flatten(chapter.subitems))));
       }
-      
-      function getCfiFromHref(book, href) {
-        const [_, id] = href.split('#')
-        let section = book.spine.get(href.split('/')[1]) || book.spine.get(href) || book.spine.get(href.split('/').slice(1).join('/'))
-        
-        const el = (id ? section.document.getElementById(id) : section.document.body)
-        return section.cfiFromElement(el)
-      }
-      
-      function getChapter(location) {
-          const locationHref = location.start.href
-
-          let match = flatten(book.navigation.toc)
-              .filter((chapter) => {
-                  return book.canonical(chapter.href).includes(locationHref)
-              }, null)
-              .reduce((result, chapter) => {
-                  const locationAfterChapter = ePub.CFI.prototype.compare(location.start.cfi, getCfiFromHref(book, chapter.href)) > 0
-                  return locationAfterChapter ? chapter : result
-              }, null);
-
-          return match;
-      };
-
+            
       function createObserver(margin) {
         var iframe = document.querySelector("iframe");
         var container = document.querySelector(".epub-container");
@@ -304,7 +281,7 @@ export default `
       rendition.on("relocated", function (location) {
         var percent = book.locations.percentageFromCfi(location.start.cfi);
         var percentage = Math.floor(percent * 100);
-        var chapter = getChapter(location);
+        var chapter = book.getChapterFromLocation(location);
 
         reactNativeWebview.postMessage(JSON.stringify({
           type: "onLocationChange",

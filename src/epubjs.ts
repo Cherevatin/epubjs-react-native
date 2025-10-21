@@ -3010,11 +3010,21 @@ export default `
 
                 clearTimeout(this.afterScrolled);
                 this.afterScrolled = setTimeout(function () {
-                  this.emit(EVENTS.MANAGERS.SCROLLED, {
-                    top: this.scrollTop,
-                    left: this.scrollLeft
+                  this.emit(f.c.MANAGERS.SCROLL, { 
+                    contentSize : {
+                      height: this.container.scrollHeight,
+                      width: this.container.scrollWidth,
+                    },
+                    layoutMeasurement: {
+                      height: this.container.clientHeight,
+                      width: this.container.clientWidth,
+                    },
+                    contentOffset: {
+                      x: this.container.scrollLeft,
+                      y: this.container.scrollTop,
+                    }
                   });
-                }.bind(this), 20);
+                }.bind(this), 250);
               }
             } else {
               this.ignore = false;
@@ -11244,6 +11254,27 @@ export default `
                 this.emit(m.c.BOOK.OPEN_FAILED, i);
               });
         }
+        getCfiFromHref(href) {
+          const [_, id] = href.split('#')
+          let section = this.spine.get(href.split('/')[1]) || this.spine.get(href) || this.spine.get(href.split('/').slice(1).join('/'))
+          
+          const el = (id ? section.document.getElementById(id) : section.document.body)
+          return section.cfiFromElement(el)
+        }
+        getChapterFromLocation(location) {
+          const locationHref = location.start.href
+
+          let match = flatten(this.navigation.toc)
+              .filter((chapter) => {
+                  return this.canonical(chapter.href).includes(locationHref)
+              }, null)
+              .reduce((result, chapter) => {
+                  const locationAfterChapter = ePub.CFI.prototype.compare(location.start.cfi, this.getCfiFromHref(chapter.href)) > 0
+                  return locationAfterChapter ? chapter : result
+              }, null);
+
+          return match;
+        };
         open(t, e) {
           var i,
             n = e || this.determineType(t);
