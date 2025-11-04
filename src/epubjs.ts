@@ -4261,7 +4261,7 @@ export default `
             if (this.iframe) {
                 rects = rects.filter(rect => {
                   const el = this.iframe.contentDocument.elementFromPoint(rect.left + 1, rect.top + 1)
-                  const target = el.closest('*')
+                  const target = el?.closest('*')
                   return target && target.textContent.trim() !== ''
                 });
             }
@@ -4346,7 +4346,7 @@ export default `
           if (this.iframe) {
             rects = rects.filter(rect => {
               const el = this.iframe.contentDocument.elementFromPoint(rect.left + 1, rect.top + 1);
-              const target = el.closest('*');
+              const target = el?.closest('*');
               return target && target.textContent.trim() !== '';
             });
           }
