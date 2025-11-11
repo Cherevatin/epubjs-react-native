@@ -5214,8 +5214,8 @@ export default `
           }
         }
         afterDisplayed(t) {
-          t.on(l.c.VIEWS.MARK_CLICKED, (e, i) =>
-            this.triggerMarkEvent(e, i, t.contents),
+          t.on(l.c.VIEWS.MARK_CLICKED, (c, e, i) =>
+            this.triggerMarkEvent(c, e, i, t.contents),
           ),
             this.hooks.render.trigger(t, this).then(() => {
               t.contents
@@ -5452,8 +5452,8 @@ export default `
         triggerUnselectedEvent() {
           this.emit(l.c.RENDITION.UNSELECTED);
         }
-        triggerMarkEvent(t, e, i) {
-          this.emit(l.c.RENDITION.MARK_CLICKED, t, e, i);
+        triggerMarkEvent(c, t, e, i) {
+          this.emit(l.c.RENDITION.MARK_CLICKED, c, t, e, i);
         }
         getRange(t, e) {
           var i = new a.a(t),
@@ -6156,7 +6156,7 @@ export default `
           );
           let a = this.contents.range(t),
             c = () => {
-              this.emit(h.c.VIEWS.MARK_CLICKED, t, e);
+              this.emit(h.c.VIEWS.MARK_CLICKED, 'highlight', t, e);
             };
           (e.epubcfi = t),
             this.pane || (this.pane = new l.Pane(this.iframe, this.element));
@@ -6187,7 +6187,7 @@ export default `
           );
           let a = this.contents.range(t),
             c = () => {
-              this.emit(h.c.VIEWS.MARK_CLICKED, t, e);
+              this.emit(h.c.VIEWS.MARK_CLICKED, 'underline', t, e);
             };
           (e.epubcfi = t),
             this.pane || (this.pane = new l.Pane(this.iframe, this.element));
@@ -6218,7 +6218,7 @@ export default `
           );
           let a = this.contents.range(t),
             c = () => {
-              this.emit(h.c.VIEWS.MARK_CLICKED, t, e);
+              this.emit(h.c.VIEWS.MARK_CLICKED,'mark', t, e);
             };
           (e.epubcfi = t),
             this.pane || (this.pane = new l.Pane(this.iframe, this.element));
