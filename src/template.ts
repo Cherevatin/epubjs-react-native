@@ -366,9 +366,9 @@ export default `
         }));
       });
 
-      rendition.on("markClicked", function (cfiRange, contents) {
+      rendition.on("markClicked", function (type, cfiRange, contents) {
         const annotations = Object.values(rendition.annotations._annotations);
-        const annotation = annotations.find(item => item.cfiRange === cfiRange);
+        const annotation = annotations.find(item => item.type === type && item.cfiRange === cfiRange);
         if (annotation) {
           reactNativeWebview.postMessage(JSON.stringify({
             type: 'onPressAnnotation',
