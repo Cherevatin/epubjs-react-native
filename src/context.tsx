@@ -501,7 +501,7 @@ export interface ReaderContextProps {
     styles?: AnnotationStyles
   ) => void;
 
-  removeAnnotation: (annotation: Annotation) => void;
+  removeAnnotation: (id: string) => void;
 
   /**
    * Remove all annotations matching with provided cfi
@@ -1078,11 +1078,11 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
-  const removeAnnotation = useCallback((annotation: Annotation) => {
+  const removeAnnotation = useCallback((id: string) => {
     webViewInjectFunctions.injectJavaScript(
       book,
       `
-        rendition.annotations.remove(${JSON.stringify(annotation.id)});
+        rendition.annotations.remove(${JSON.stringify(id)});
 
         ${webViewInjectFunctions.onChangeAnnotations()}
     `
