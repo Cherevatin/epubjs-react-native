@@ -427,6 +427,7 @@ export interface ReaderContextProps {
   changeFontSize: (size: FontSize) => void;
 
   addAnnotation: (
+    id: string,
     type: AnnotationType,
     cfiRange: ePubCfi,
     data?: object,
@@ -500,7 +501,7 @@ export interface ReaderContextProps {
     styles?: AnnotationStyles
   ) => void;
 
-  removeAnnotation: (annotation: Annotation) => void;
+  removeAnnotation: (id: string) => void;
 
   /**
    * Remove all annotations matching with provided cfi
@@ -1008,6 +1009,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
 
   const addAnnotation = useCallback(
     (
+      id: string,
       type: AnnotationType,
       cfiRange: string,
       data?: object,
@@ -1021,7 +1023,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       webViewInjectFunctions.injectJavaScript(
         book,
         `
-          ${webViewInjectFunctions.addAnnotation(type, cfiRange, data, iconClass, styles)}
+          ${webViewInjectFunctions.addAnnotation(id, type, cfiRange, data, iconClass, styles)}
 
           ${webViewInjectFunctions.onChangeAnnotations()}
         `
@@ -1076,11 +1078,11 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
-  const removeAnnotation = useCallback((annotation: Annotation) => {
+  const removeAnnotation = useCallback((id: string) => {
     webViewInjectFunctions.injectJavaScript(
       book,
       `
-        rendition.annotations.remove(${JSON.stringify(annotation.cfiRange)}, ${JSON.stringify(annotation.type)});
+        rendition.annotations.remove(${JSON.stringify(id)});
 
         ${webViewInjectFunctions.onChangeAnnotations()}
     `
@@ -1098,9 +1100,9 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
     webViewInjectFunctions.injectJavaScript(
       book,
       `
-        ['highlight', 'underline', 'mark'].forEach(type => {
-          rendition.annotations.remove('${cfiRange}', type);
-        });
+        let annotations = Object.values(rendition.annotations._annotations).filter(annotation => annotation.cfiRange === ${cfiRange});
+
+        annotations.forEach(a => rendition.annotations.remove(a.id));
 
         ${webViewInjectFunctions.onChangeAnnotations()}
     `
@@ -1118,7 +1120,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
         }
 
         annotations.forEach(annotation => {
-          rendition.annotations.remove(annotation.cfiRange, annotation.type);
+          rendition.annotations.remove(annotation.id);
         });
 
         ${webViewInjectFunctions.onChangeAnnotations()}
@@ -1135,6 +1137,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       webViewInjectFunctions.injectJavaScript(
         book,
         webViewInjectFunctions.addAnnotation(
+          annotation.id,
           annotation.type,
           annotation.cfiRange,
           annotation.data,

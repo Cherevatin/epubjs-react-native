@@ -156,6 +156,7 @@ export type Footnote = {
 };
 
 export type Annotation<Data = any> = {
+  id: string;
   type: AnnotationType;
   data: Data;
   cfiRange: ePubCfi;

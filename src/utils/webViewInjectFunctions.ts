@@ -49,6 +49,7 @@ export function mapAnnotationStylesToEpubStyles(
 
 export function mapObjectToAnnotation(objectName = 'annotation') {
   return `{
+    id: ${objectName}.id,
     type: ${objectName}.type,
     data: ${objectName}.data,
     cfiRange: ${objectName}.cfiRange,
@@ -86,6 +87,7 @@ export function onChangeAnnotations(
 }
 
 export function addAnnotation(
+  id: string,
   type: AnnotationType,
   cfiRange: ePubCfi,
   data?: object,
@@ -97,7 +99,7 @@ export function addAnnotation(
   const epubStyles = mapAnnotationStylesToEpubStyles(type, styles);
 
   return `
-    const annotation = rendition.annotations.add('${type}', ${JSON.stringify(cfiRange)}, ${JSON.stringify(
+    const annotation = rendition.annotations.add('${id}', '${type}', ${JSON.stringify(cfiRange)}, ${JSON.stringify(
       data ?? {}
     )}, () => {}, ${JSON.stringify(iconClass)}, ${JSON.stringify(epubStyles)}, ${JSON.stringify(cfiRangeText)});
 
@@ -180,7 +182,7 @@ export function updateAnnotation(
   return `
     let annotations = Object.values(rendition.annotations._annotations);
 
-    annotations = annotations.filter(item => item.cfiRange === ${JSON.stringify(annotation.cfiRange)});
+    annotations = annotations.filter(item => item.id === ${JSON.stringify(annotation.id)});
 
     annotations.forEach(annotation => {
       annotation.update(${JSON.stringify(data)}, ${JSON.stringify(epubStyles)});
