@@ -1080,7 +1080,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
     webViewInjectFunctions.injectJavaScript(
       book,
       `
-        rendition.annotations.remove(${JSON.stringify(annotation.cfiRange)}, ${JSON.stringify(annotation.type)});
+        rendition.annotations.remove(${JSON.stringify(annotation.id)});
 
         ${webViewInjectFunctions.onChangeAnnotations()}
     `
@@ -1098,9 +1098,9 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
     webViewInjectFunctions.injectJavaScript(
       book,
       `
-        ['highlight', 'underline', 'mark'].forEach(type => {
-          rendition.annotations.remove('${cfiRange}', type);
-        });
+        let annotations = Object.values(rendition.annotations._annotations).filter(annotation => annotation.cfiRange === ${cfiRange});
+
+        annotations.forEach(a => rendition.annotations.remove(a.id));
 
         ${webViewInjectFunctions.onChangeAnnotations()}
     `
@@ -1118,7 +1118,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
         }
 
         annotations.forEach(annotation => {
-          rendition.annotations.remove(annotation.cfiRange, annotation.type);
+          rendition.annotations.remove(annotation.id);
         });
 
         ${webViewInjectFunctions.onChangeAnnotations()}

@@ -4839,6 +4839,7 @@ export default `
       i(23);
       class p {
         constructor({
+          id,
           type: t,
           cfiRange: e,
           data: i,
@@ -4848,6 +4849,7 @@ export default `
           styles: o,
           cfiRangeText: a,
         }) {
+          (this.id = id),
           (this.type = t),
             (this.cfiRange = e),
             (this.cfiRangeText = a),
@@ -4910,6 +4912,7 @@ export default `
         attach(t) {
           let e,
             {
+              id,
               cfiRange: i,
               cfiRangeText: n,
               data: r,
@@ -4921,10 +4924,10 @@ export default `
             } = this;
           return (
             "highlight" === s
-              ? (e = t.highlight(i, r, a, h, c, n))
+              ? (e = t.highlight(id, i, r, a, h, c, n))
               : "underline" === s
-                ? (e = t.underline(i, r, a, h, c, n))
-                : "mark" === s && (e = t.mark(i, r, a, h, c, n)),
+                ? (e = t.underline(id, i, r, a, h, c, n))
+                : "mark" === s && (e = t.mark(id, i, r, a, h, c, n)),
             (this.mark = e),
             this.emit(l.c.ANNOTATION.ATTACH, e),
             e
@@ -4932,7 +4935,7 @@ export default `
         }
         detach(t) {
           let e,
-            { cfiRange: i, type: n } = this;
+            { id: i } = this;
           return (
             t &&
               ("highlight" === n
@@ -4960,9 +4963,10 @@ export default `
               this.rendition.hooks.unloaded.register(this.clear.bind(this));
           }
           add(t, e, i, n, r, s, o) {
-            let h = encodeURI(e + t),
+            const h = crypto.randomUUID(),
               l = new a.a(e).spinePos,
               c = new p({
+                id: h,
                 type: t,
                 cfiRange: e,
                 data: i,
@@ -4986,8 +4990,7 @@ export default `
               c
             );
           }
-          remove(t, e) {
-            let i = encodeURI(t + e);
+          remove(i) {
             if (i in this._annotations) {
               let n = this._annotations[i];
               if (e && n.type !== e) return;
@@ -6144,7 +6147,7 @@ export default `
             this.elementBounds
           );
         }
-        highlight(t, e = {}, i, n = "epubjs-hl", r = {}, s = "") {
+        highlight(id, t, e = {}, i, n = "epubjs-hl", r = {}, s = "") {
           if (!this.contents) return;
           const o = Object.assign(
             {
@@ -6156,14 +6159,14 @@ export default `
           );
           let a = this.contents.range(t),
             c = () => {
-              this.emit(h.c.VIEWS.MARK_CLICKED, 'highlight', t, e);
+              this.emit(h.c.VIEWS.MARK_CLICKED, id, t, e);
             };
           (e.epubcfi = t),
             this.pane || (this.pane = new l.Pane(this.iframe, this.element));
           let u = new l.Highlight(a, n, e, o, this.iframe),
             d = this.pane.addMark(u);
           return (
-            (this.highlights[t] = {
+            (this.highlights[id] = {
               mark: d,
               element: d.element,
               listeners: [c, i],
@@ -6175,7 +6178,7 @@ export default `
             d
           );
         }
-        underline(t, e = {}, i, n = "epubjs-ul", r = {}, s = "") {
+        underline(id, t, e = {}, i, n = "epubjs-ul", r = {}, s = "") {
           if (!this.contents) return;
           const o = Object.assign(
             {
@@ -6187,14 +6190,14 @@ export default `
           );
           let a = this.contents.range(t),
             c = () => {
-              this.emit(h.c.VIEWS.MARK_CLICKED, 'underline', t, e);
+              this.emit(h.c.VIEWS.MARK_CLICKED, id, t, e);
             };
           (e.epubcfi = t),
             this.pane || (this.pane = new l.Pane(this.iframe, this.element));
           let u = new l.Underline(a, n, e, o, this.iframe),
             d = this.pane.addMark(u);
           return (
-            (this.underlines[t] = {
+            (this.underlines[id] = {
               mark: d,
               element: d.element,
               listeners: [c, i],
@@ -6206,7 +6209,7 @@ export default `
             d
           );
         }
-        mark(t, e = {}, i, n = "epubjs-mk", r = {}, s = "") {
+        mark(id, t, e = {}, i, n = "epubjs-mk", r = {}, s = "") {
           if (!this.contents) return;
           const o = Object.assign(
             {
@@ -6218,14 +6221,14 @@ export default `
           );
           let a = this.contents.range(t),
             c = () => {
-              this.emit(h.c.VIEWS.MARK_CLICKED,'mark', t, e);
+              this.emit(h.c.VIEWS.MARK_CLICKED, id, t, e);
             };
           (e.epubcfi = t),
             this.pane || (this.pane = new l.Pane(this.iframe, this.element));
           let u = new l.Mark(a, n, e, o, this.iframe),
             d = this.pane.addMark(u);
           return (
-            (this.marks[t] = {
+            (this.marks[id] = {
               mark: d,
               element: d.element,
               listeners: [c, i],

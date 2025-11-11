@@ -49,6 +49,7 @@ export function mapAnnotationStylesToEpubStyles(
 
 export function mapObjectToAnnotation(objectName = 'annotation') {
   return `{
+    id: ${objectName}.id,
     type: ${objectName}.type,
     data: ${objectName}.data,
     cfiRange: ${objectName}.cfiRange,
@@ -180,7 +181,7 @@ export function updateAnnotation(
   return `
     let annotations = Object.values(rendition.annotations._annotations);
 
-    annotations = annotations.filter(item => item.cfiRange === ${JSON.stringify(annotation.cfiRange)});
+    annotations = annotations.filter(item => item.id === ${JSON.stringify(annotation.id)});
 
     annotations.forEach(annotation => {
       annotation.update(${JSON.stringify(data)}, ${JSON.stringify(epubStyles)});
