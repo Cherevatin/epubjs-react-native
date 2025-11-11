@@ -87,6 +87,7 @@ export function onChangeAnnotations(
 }
 
 export function addAnnotation(
+  id: string,
   type: AnnotationType,
   cfiRange: ePubCfi,
   data?: object,
@@ -98,7 +99,7 @@ export function addAnnotation(
   const epubStyles = mapAnnotationStylesToEpubStyles(type, styles);
 
   return `
-    const annotation = rendition.annotations.add('${type}', ${JSON.stringify(cfiRange)}, ${JSON.stringify(
+    const annotation = rendition.annotations.add('${id}', '${type}', ${JSON.stringify(cfiRange)}, ${JSON.stringify(
       data ?? {}
     )}, () => {}, ${JSON.stringify(iconClass)}, ${JSON.stringify(epubStyles)}, ${JSON.stringify(cfiRangeText)});
 

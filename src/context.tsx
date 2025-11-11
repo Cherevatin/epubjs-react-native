@@ -427,6 +427,7 @@ export interface ReaderContextProps {
   changeFontSize: (size: FontSize) => void;
 
   addAnnotation: (
+    id: string,
     type: AnnotationType,
     cfiRange: ePubCfi,
     data?: object,
@@ -1008,6 +1009,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
 
   const addAnnotation = useCallback(
     (
+      id: string,
       type: AnnotationType,
       cfiRange: string,
       data?: object,
@@ -1021,7 +1023,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       webViewInjectFunctions.injectJavaScript(
         book,
         `
-          ${webViewInjectFunctions.addAnnotation(type, cfiRange, data, iconClass, styles)}
+          ${webViewInjectFunctions.addAnnotation(id, type, cfiRange, data, iconClass, styles)}
 
           ${webViewInjectFunctions.onChangeAnnotations()}
         `
@@ -1135,6 +1137,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       webViewInjectFunctions.injectJavaScript(
         book,
         webViewInjectFunctions.addAnnotation(
+          annotation.id,
           annotation.type,
           annotation.cfiRange,
           annotation.data,

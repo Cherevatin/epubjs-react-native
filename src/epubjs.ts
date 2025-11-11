@@ -4935,7 +4935,7 @@ export default `
         }
         detach(t) {
           let e,
-            { id: i } = this;
+            { id: i, type: n } = this;
           return (
             t &&
               ("highlight" === n
@@ -4962,9 +4962,8 @@ export default `
               this.rendition.hooks.render.register(this.inject.bind(this)),
               this.rendition.hooks.unloaded.register(this.clear.bind(this));
           }
-          add(t, e, i, n, r, s, o) {
-            const h = crypto.randomUUID(),
-              l = new a.a(e).spinePos,
+          add(h, t, e, i, n, r, s, o) {
+            const l = new a.a(e).spinePos,
               c = new p({
                 id: h,
                 type: t,
@@ -4993,19 +4992,18 @@ export default `
           remove(i) {
             if (i in this._annotations) {
               let n = this._annotations[i];
-              if (e && n.type !== e) return;
               this.rendition.views().forEach((t) => {
                 this._removeFromAnnotationBySectionIndex(n.sectionIndex, i),
                   n.sectionIndex === t.index && n.detach(t);
               }),
                 (this.highlights = this.highlights.filter(
-                  (i) => i.type !== e && i.cfiRange !== t,
+                  (item) => item.id !== i,
                 )),
                 (this.underlines = this.underlines.filter(
-                  (i) => i.type !== e && i.cfiRange !== t,
+                  (item) => item.id !== i,
                 )),
                 (this.marks = this.marks.filter(
-                  (i) => i.type !== e && i.cfiRange !== t,
+                 (item) => item.id !== i,
                 )),
                 delete this._annotations[i];
             }
@@ -5018,14 +5016,14 @@ export default `
           _annotationsAt(t) {
             return this._annotationsBySectionIndex[t];
           }
-          highlight(t, e, i, n, r, s) {
-            return this.add("highlight", t, e, i, n, r, s);
+          highlight(h, t, e, i, n, r, s) {
+            return this.add(h, "highlight", t, e, i, n, r, s);
           }
-          underline(t, e, i, n, r, s) {
-            return this.add("underline", t, i, n, r, s, e);
+          underline(h, t, e, i, n, r, s) {
+            return this.add(h, "underline", t, i, n, r, s, e);
           }
-          mark(t, e, i, n, r, s) {
-            return this.add("mark", t, i, n, r, s, e);
+          mark(h, t, e, i, n, r, s) {
+            return this.add(h, "mark", t, i, n, r, s, e);
           }
           each() {
             return [...this.highlights, ...this.underlines, ...this.marks];
