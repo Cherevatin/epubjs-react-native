@@ -643,6 +643,7 @@ export function View({
         ref={book}
         source={{ uri: templateUri }}
         showsVerticalScrollIndicator={false}
+        onContentProcessDidTerminate={() => book.current?.reload()}
         javaScriptEnabled
         originWhitelist={['*']}
         scrollEnabled={false}
