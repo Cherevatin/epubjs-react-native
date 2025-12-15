@@ -4512,14 +4512,14 @@ export default `
         }
         mergeRectsByBottom(rects) {
           const result = [];
-          const thresholdMultiplier = 0.6;
+          const thresholdMultiplier = 0.5;
           
           rects
             .sort((a, b) => a.bottom - b.bottom || a.left - b.left)
             .forEach(rect => {
               const index = result.findIndex(r => {
                 const threshold = Math.max(r.height, rect.height) * thresholdMultiplier;
-                return Math.abs(r.bottom - rect.bottom) < threshold
+                return Math.abs(r.bottom - rect.bottom) < threshold;
               });
 
               if (index === -1) {
@@ -4551,8 +4551,11 @@ export default `
           const result = [];
           const multiplier = 0.8;
 
+          const maxWidth = Math.max(...rects.map(r => r.width));
+
           rects.forEach(rect => {
             const conflictIndex = result.findIndex(r =>
+              rect.bottom !== r.bottom &&
               rect.left < r.right &&
               rect.right > r.left &&
               Math.abs(rect.bottom - r.bottom) < Math.min(rect.height, r.height) * multiplier
@@ -4562,9 +4565,28 @@ export default `
               result.push(rect);
             } else {
               const existing = result[conflictIndex];
-
               if (rect.height < existing.height) {
-                result[conflictIndex] = rect;
+                if (existing.width < maxWidth && rect.width < maxWidth) {
+                  const left = Math.min(existing.left, rect.left);
+                  const right = Math.max(existing.right, rect.right);
+                  const top = Math.min(existing.top, rect.top);
+                  const bottom = Math.max(existing.bottom, rect.bottom);
+
+                  result[conflictIndex] = {
+                    ...existing,
+                    left,
+                    right,
+                    top,
+                    bottom,
+                    width: right - left,
+                    height: bottom - top,
+                    x: left,
+                    y: top,
+                  };
+                }
+                else {
+                  result[conflictIndex] = rect;
+                }
               }
             }
           });
