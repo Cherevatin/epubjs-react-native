@@ -4510,8 +4510,82 @@ export default `
           }
           this.element.appendChild(t);
         }
+        mergeRectsByBottom(rects) {
+          const result = [];
+          const thresholdMultiplier = 0.6;
+          
+          rects
+            .sort((a, b) => a.bottom - b.bottom || a.left - b.left)
+            .forEach(rect => {
+              const index = result.findIndex(r => {
+                const threshold = Math.max(r.height, rect.height) * thresholdMultiplier;
+                return Math.abs(r.bottom - rect.bottom) < threshold
+              });
+
+              if (index === -1) {
+                result.push({ ...rect });
+                return;
+              }
+
+              const existing = result[index];
+
+              const left = Math.min(existing.left, rect.left);
+              const right = Math.max(existing.right, rect.right);
+              const top = Math.min(existing.top, rect.top);
+              const bottom = Math.max(existing.bottom, rect.bottom);
+
+              result[index] = {
+                ...existing,
+                left,
+                right,
+                top,
+                bottom,
+                width: right - left,
+                height: bottom - top,
+              };
+            });
+
+          return result;
+        }
+        filterOverlappingBottomRects(rects) {
+          const result = [];
+          const multiplier = 0.8;
+
+          rects.forEach(rect => {
+            const conflictIndex = result.findIndex(r =>
+              rect.left < r.right &&
+              rect.right > r.left &&
+              Math.abs(rect.bottom - r.bottom) < Math.min(rect.height, r.height) * multiplier
+            );
+
+            if (conflictIndex === -1) {
+              result.push(rect);
+            } else {
+              const existing = result[conflictIndex];
+
+              if (rect.height < existing.height) {
+                result[conflictIndex] = rect;
+              }
+            }
+          });
+
+          return result;
+        }
         filteredRanges() {
-          return this.mergeHorizontal();
+          if (!this.range) return [];
+
+          let rects = Array.from(this.range.getClientRects())
+            .map(r => JSON.parse(JSON.stringify(r)));
+
+          if (this.iframe) {
+            rects = rects.filter(rect => {
+              const el = this.iframe.contentDocument.elementFromPoint(rect.left + 1, rect.top + 1);
+              const target = el?.closest('*');
+              return target && target.textContent.trim() !== '';
+            });
+          }
+
+          return this.mergeRectsByBottom(this.filterOverlappingBottomRects(rects));
         }
       };
     },
