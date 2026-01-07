@@ -949,6 +949,51 @@ export default `
             o = t.startOffset,
             a = t.endOffset,
             h = !1;
+
+          if (s.nodeType === Node.ELEMENT_NODE) {
+            let targetNode;
+
+            if (a > 0 && s.childNodes[a - 1]) {
+              let curr = s.childNodes[a - 1];
+              while (curr) {
+                let last = curr;
+                while (last.lastChild) {
+                  last = last.lastChild;
+                }
+
+                if (last.nodeType === Node.TEXT_NODE) {
+                  targetNode = last;
+                  break;
+                }
+                curr = curr.previousSibling;
+              }
+            }
+
+            if (!targetNode && s.previousSibling) {
+              let prev = s.previousSibling;
+              while (prev.lastChild) {
+                prev = prev.lastChild;
+              }
+
+              if (prev.nodeType === Node.TEXT_NODE) {
+                targetNode = prev;
+              }
+            }
+
+            if (targetNode) {
+              s = targetNode;
+              a = targetNode.textContent.length;
+            }
+          }
+
+          if (s.nodeType === Node.TEXT_NODE && a > 0) {
+            let textToEnd = s.textContent.substring(0, a);
+            let match = textToEnd.match(/\s+$/);
+            if (match) {
+              a -= match[0].length;
+            }
+          }
+
           if (
             (i && (h = null != r.ownerDocument.querySelector("." + i)),
             "string" == typeof e
