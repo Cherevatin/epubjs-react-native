@@ -352,6 +352,8 @@ export interface ReaderProps {
     progress: number,
     currentSection: Section | null
   ) => void;
+
+  onGoToLocationComplete?: (currentLocation: Location) => void;
   /**
    * Called once when the book has been searched
    * @param {SearchResult[]} results

@@ -4,6 +4,7 @@ export enum EventType {
   OnDisplayError = 'onDisplayError',
   OnResized = 'onResized',
   OnLocationChange = 'onLocationChange',
+  OnGoToLocationComplete = 'onGoToLocationComplete',
   OnSearch = 'onSearch',
   OnLocationsReady = 'onLocationsReady',
   OnSelected = 'onSelected',

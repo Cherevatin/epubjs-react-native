@@ -38,6 +38,7 @@ export function View({
   onDisplayError = () => {},
   onResized = () => {},
   onLocationChange = () => {},
+  onGoToLocationComplete = () => {},
   onRendered = () => {},
   onSearch = () => {},
   onLocationsReady = () => {},
@@ -307,6 +308,12 @@ export function View({
         progress,
         currentSection
       );
+    }
+
+    if (type === EventType.OnGoToLocationComplete) {
+      const { currentLocation }: { currentLocation: Location } = parsedEvent;
+      eventEmitter.trigger(EventType.OnGoToLocationComplete, currentLocation);
+      return onGoToLocationComplete(currentLocation);
     }
 
     if (type === 'onSearch') {

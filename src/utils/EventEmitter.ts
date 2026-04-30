@@ -14,6 +14,7 @@ import type {
   ScrollEvent,
   SelectedEvent,
   DisplayErrorEvent,
+  Location,
 } from 'src/types';
 import type { EventType } from './enums/event-type.enum';
 
@@ -23,6 +24,7 @@ export type EventPayloadByEvent = {
   [EventType.OnDisplayError]: DisplayErrorEvent;
   [EventType.OnResized]: LayoutEvent;
   [EventType.OnLocationChange]: LocationChangeEvent;
+  [EventType.OnGoToLocationComplete]: Location;
   [EventType.OnSearch]: SearchEvent;
   [EventType.OnLocationsReady]: LocationsReadyEvent;
   [EventType.OnSelected]: SelectedEvent;

@@ -30,6 +30,7 @@ const INTERNAL_EVENTS = [
   EventType.OnDoubleTap,
   EventType.OnSingleTap,
   EventType.OnPageComplete,
+  EventType.OnGoToLocationComplete,
 ];
 
 export default INTERNAL_EVENTS;

@@ -866,6 +866,9 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       rendition.display('${targetCfi}')
         .then(() => {
             rendition.moveTo({ top: rendition.manager.container.scrollTop + (${scrollOffset} ?? 0), left: 0 });
+            reactNativeWebview.postMessage(
+              JSON.stringify({ type: 'onGoToLocationComplete', currentLocation: rendition.currentLocation() })
+            );
         });
       true;
     `);
