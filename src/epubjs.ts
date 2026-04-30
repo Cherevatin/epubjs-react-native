@@ -949,6 +949,51 @@ export default `
             o = t.startOffset,
             a = t.endOffset,
             h = !1;
+
+          if (s.nodeType === Node.ELEMENT_NODE) {
+            let targetNode;
+
+            if (a > 0 && s.childNodes[a - 1]) {
+              let curr = s.childNodes[a - 1];
+              while (curr) {
+                let last = curr;
+                while (last.lastChild) {
+                  last = last.lastChild;
+                }
+
+                if (last.nodeType === Node.TEXT_NODE) {
+                  targetNode = last;
+                  break;
+                }
+                curr = curr.previousSibling;
+              }
+            }
+
+            if (!targetNode && s.previousSibling) {
+              let prev = s.previousSibling;
+              while (prev.lastChild) {
+                prev = prev.lastChild;
+              }
+
+              if (prev.nodeType === Node.TEXT_NODE) {
+                targetNode = prev;
+              }
+            }
+
+            if (targetNode) {
+              s = targetNode;
+              a = targetNode.textContent.length;
+            }
+          }
+
+          if (s.nodeType === Node.TEXT_NODE && a > 0) {
+            let textToEnd = s.textContent.substring(0, a);
+            let match = textToEnd.match(/\s+$/);
+            if (match) {
+              a -= match[0].length;
+            }
+          }
+
           if (
             (i && (h = null != r.ownerDocument.querySelector("." + i)),
             "string" == typeof e
@@ -4512,14 +4557,14 @@ export default `
         }
         mergeRectsByBottom(rects) {
           const result = [];
-          const thresholdMultiplier = 0.6;
+          const thresholdMultiplier = 0.5;
           
           rects
             .sort((a, b) => a.bottom - b.bottom || a.left - b.left)
             .forEach(rect => {
               const index = result.findIndex(r => {
                 const threshold = Math.max(r.height, rect.height) * thresholdMultiplier;
-                return Math.abs(r.bottom - rect.bottom) < threshold
+                return Math.abs(r.bottom - rect.bottom) < threshold;
               });
 
               if (index === -1) {
@@ -4551,8 +4596,11 @@ export default `
           const result = [];
           const multiplier = 0.8;
 
+          const maxWidth = Math.max(...rects.map(r => r.width));
+
           rects.forEach(rect => {
             const conflictIndex = result.findIndex(r =>
+              rect.bottom !== r.bottom &&
               rect.left < r.right &&
               rect.right > r.left &&
               Math.abs(rect.bottom - r.bottom) < Math.min(rect.height, r.height) * multiplier
@@ -4562,9 +4610,28 @@ export default `
               result.push(rect);
             } else {
               const existing = result[conflictIndex];
-
               if (rect.height < existing.height) {
-                result[conflictIndex] = rect;
+                if (existing.width < maxWidth && rect.width < maxWidth) {
+                  const left = Math.min(existing.left, rect.left);
+                  const right = Math.max(existing.right, rect.right);
+                  const top = Math.min(existing.top, rect.top);
+                  const bottom = Math.max(existing.bottom, rect.bottom);
+
+                  result[conflictIndex] = {
+                    ...existing,
+                    left,
+                    right,
+                    top,
+                    bottom,
+                    width: right - left,
+                    height: bottom - top,
+                    x: left,
+                    y: top,
+                  };
+                }
+                else {
+                  result[conflictIndex] = rect;
+                }
               }
             }
           });
