@@ -863,15 +863,40 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
   const goToLocation = useCallback(
     (targetCfi: ePubCfi, scrollOffset?: number) => {
       book.current?.injectJavaScript(`
-      rendition.display('${targetCfi}')
-        .then(() => {
-            rendition.moveTo({ top: rendition.manager.container.scrollTop + (${scrollOffset} ?? 0), left: 0 });
-            reactNativeWebview.postMessage(
-              JSON.stringify({ type: 'onGoToLocationComplete', currentLocation: rendition.currentLocation() })
-            );
-        });
-      true;
-    `);
+        rendition.display('${targetCfi}')
+          .then(() => {
+            rendition.moveTo({ 
+              top: rendition.manager.container.scrollTop + (${scrollOffset} ?? 0), 
+              left: 0 
+            });
+
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                const loc = rendition.currentLocation();
+
+                if (!loc) {
+                  setTimeout(() => {
+                    reactNativeWebview.postMessage(
+                      JSON.stringify({
+                        type: 'onGoToLocationComplete',
+                        currentLocation: rendition.currentLocation()
+                      })
+                    );
+                  }, 30);
+                  return;
+                }
+                  
+                reactNativeWebview.postMessage(
+                  JSON.stringify({
+                    type: 'onGoToLocationComplete',
+                    currentLocation: loc
+                  })
+                );
+              });
+            });
+          });
+        true;
+      `);
     },
     []
   );
