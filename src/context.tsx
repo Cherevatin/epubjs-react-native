@@ -863,6 +863,10 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
   const goToLocation = useCallback(
     (targetCfi: ePubCfi, scrollOffset?: number) => {
       book.current?.injectJavaScript(`
+        function isValidLocation(loc) {
+          return loc && typeof loc === 'object' && Object.keys(loc).length > 0;
+        }
+
         rendition.display('${targetCfi}')
           .then(() => {
             rendition.moveTo({ 
@@ -872,26 +876,28 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
 
             requestAnimationFrame(() => {
               requestAnimationFrame(() => {
-                const loc = rendition.currentLocation();
+                let currentLocation = rendition.currentLocation();
 
-                if (!loc) {
+                if (isValidLocation(currentLocation)) {
+                  reactNativeWebview.postMessage(
+                    JSON.stringify({
+                      type: 'onGoToLocationComplete',
+                      currentLocation
+                    })
+                  );
+                } else {
                   setTimeout(() => {
-                    reactNativeWebview.postMessage(
-                      JSON.stringify({
-                        type: 'onGoToLocationComplete',
-                        currentLocation: rendition.currentLocation()
-                      })
-                    );
+                    currentLocation = rendition.currentLocation();
+                    if (isValidLocation(currentLocation)) {
+                      reactNativeWebview.postMessage(
+                        JSON.stringify({
+                          type: 'onGoToLocationComplete',
+                          currentLocation
+                        })
+                      );
+                    }
                   }, 30);
-                  return;
                 }
-                  
-                reactNativeWebview.postMessage(
-                  JSON.stringify({
-                    type: 'onGoToLocationComplete',
-                    currentLocation: loc
-                  })
-                );
               });
             });
           });
