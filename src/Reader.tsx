@@ -41,8 +41,8 @@ export function Reader({
 }: ReaderProps) {
   const isWeb = Platform.OS === 'web';
   const fileSystem = useMemo(
-    () => (useFileSystem ?? browserFileSystem)(),
-    [useFileSystem]
+    () => (isWeb ? browserFileSystem : useFileSystem ?? browserFileSystem)(),
+    [isWeb, useFileSystem]
   );
   const {
     downloadFile,
@@ -137,13 +137,6 @@ export function Reader({
           });
 
           setTemplate(templateSource);
-
-          if (isWeb) {
-            setTemplateUrl(
-              `data:text/html;charset=utf-8,${encodeURIComponent(templateSource)}`
-            );
-          }
-
           setIsLoading(false);
         }
 
@@ -177,13 +170,6 @@ export function Reader({
             });
 
             setTemplate(templateSource);
-
-            if (isWeb) {
-              setTemplateUrl(
-                `data:text/html;charset=utf-8,${encodeURIComponent(templateSource)}`
-              );
-            }
-
             setIsLoading(false);
           } else {
             const sourceName = getSourceName(source, offlineAccess);
@@ -217,13 +203,6 @@ export function Reader({
             });
 
             setTemplate(templateSource);
-
-            if (isWeb) {
-              setTemplateUrl(
-                `data:text/html;charset=utf-8,${encodeURIComponent(templateSource)}`
-              );
-            }
-
             setIsLoading(false);
           }
         }
@@ -263,6 +242,24 @@ export function Reader({
       saveTemplateFileToDoc();
     }
   }, [documentDirectory, isWeb, template, writeAsStringAsync]);
+
+  useEffect(() => {
+    if (!template || !isWeb) {
+      return;
+    }
+
+    const blob = new Blob([template], {
+      type: 'text/html;charset=utf-8',
+    });
+
+    const url = URL.createObjectURL(blob);
+    setTemplateUrl(url);
+
+    // eslint-disable-next-line consistent-return
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [isWeb, template]);
 
   if (isLoading) {
     return renderLoadingFileComponent({
