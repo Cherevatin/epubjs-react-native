@@ -1,13 +1,13 @@
-import WebView from 'react-native-webview';
 import {
   Annotation,
   AnnotationStyles,
   AnnotationType,
   ePubCfi,
+  ReaderBridge,
 } from '../types';
 
 export function injectJavaScript(
-  ref: React.MutableRefObject<WebView | null>,
+  ref: React.MutableRefObject<ReaderBridge | null>,
   script: string
 ) {
   ref.current?.injectJavaScript(`

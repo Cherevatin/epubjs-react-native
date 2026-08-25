@@ -94,7 +94,37 @@ export default `
         allowPopups: allowPopups,
         allowScriptedContent: allowScriptedContent
       });
-     const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView : (window.parent || window);
+      const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView : (window.parent || window);
+
+      window.addEventListener('message', (event) => {
+        if (event.source !== window.parent) {
+          return;
+        }
+
+        let data = event.data;
+
+        if (typeof data === 'string') {
+          try {
+            data = JSON.parse(data);
+          } catch {
+            return;
+          }
+        }
+
+        if (
+          !data ||
+          data.type !== 'injectJavaScript' ||
+          typeof data.script !== 'string'
+        ) {
+          return;
+        }
+
+        try {
+          eval(data.script);
+        } catch (error) {
+          console.error('[epubjs-react-native:web]', 'Failed to execute script', error);
+        }
+      });
       reactNativeWebview.postMessage(JSON.stringify({ type: "onStarted" }));
       
       function flatten(chapters) {

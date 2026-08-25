@@ -5,7 +5,6 @@ import React, {
   useReducer,
   useRef,
 } from 'react';
-import type WebView from 'react-native-webview';
 import type {
   ePubCfi,
   FontSize,
@@ -23,6 +22,7 @@ import type {
   Flow,
   PaginateOptions,
   Margins,
+  ReaderBridge,
 } from './types';
 import * as webViewInjectFunctions from './utils/webViewInjectFunctions';
 import { EventEmitter } from './utils/EventEmitter';
@@ -324,7 +324,7 @@ function bookReducer(state: InitialState, action: BookActions): InitialState {
 }
 
 export interface ReaderContextProps {
-  registerBook: (bookRef: WebView) => void;
+  registerBook: (bridge: ReaderBridge) => void;
   setAtStart: (atStart: boolean) => void;
   setAtEnd: (atEnd: boolean) => void;
   setTotalLocations: (totalLocations: number) => void;
@@ -753,9 +753,9 @@ const ReaderContext = createContext<ReaderContextProps>({
 
 function ReaderProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(bookReducer, initialState);
-  const book = useRef<WebView | null>(null);
+  const book = useRef<ReaderBridge | null>(null);
 
-  const registerBook = useCallback((bookRef: WebView) => {
+  const registerBook = useCallback((bookRef: ReaderBridge) => {
     book.current = bookRef;
   }, []);
 

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, View as RNView } from 'react-native';
 import { WebView } from 'react-native-webview';
 import type {
@@ -14,6 +14,7 @@ import type {
   Location,
   Orientation,
   PageCompleteEvent,
+  ReaderBridge,
   ReaderProps,
   ScrollEvent,
   SearchResult,
@@ -132,6 +133,20 @@ export function View({
   } = useContext(ReaderContext);
   const book = useRef<WebView>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const iframeBridge = useMemo<ReaderBridge>(
+    () => ({
+      injectJavaScript: (script) => {
+        iframeRef.current?.contentWindow?.postMessage(
+          {
+            type: 'injectJavaScript',
+            script,
+          },
+          '*'
+        );
+      },
+    }),
+    []
+  );
   const isWebEnvironment =
     typeof window !== 'undefined' && typeof document !== 'undefined';
   const debugEnabled =
@@ -655,8 +670,12 @@ export function View({
   }, [initialBookmarks, setBookmarks]);
 
   useEffect(() => {
-    if (book.current) registerBook(book.current);
-  }, [registerBook]);
+    if (isWebEnvironment) {
+      registerBook(iframeBridge);
+    } else if (book.current) {
+      registerBook(book.current);
+    }
+  }, [isWebEnvironment, registerBook, iframeBridge]);
 
   if (isWebEnvironment) {
     return (

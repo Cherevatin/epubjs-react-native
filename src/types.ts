@@ -2,6 +2,10 @@ import { DimensionValue, ViewStyle } from 'react-native';
 import { WebViewCustomMenuItems } from 'react-native-webview/lib/WebViewTypes';
 import { SourceType } from './utils/enums/source-type.enum';
 
+export interface ReaderBridge {
+  injectJavaScript(script: string): void;
+}
+
 export type PaginateOptions = {
   keepScrollOffset?: boolean;
 };
