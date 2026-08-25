@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Dimensions, View as RNView } from 'react-native';
+import { Dimensions, Platform, View as RNView } from 'react-native';
 import { WebView } from 'react-native-webview';
 import type {
   ShouldStartLoadRequest,
@@ -160,71 +160,83 @@ export function View({
     onIsBookmarked(isBookmarked);
   };
 
+  const debugEnabled =
+    typeof globalThis !== 'undefined' &&
+    Boolean((globalThis as any).epubjsReactNativeDebug);
+
   const onMessage = (event: WebViewMessageEvent) => {
-    const parsedEvent = JSON.parse(event.nativeEvent.data);
+    try {
+      const parsedEvent = JSON.parse(event.nativeEvent.data);
+      const { type }: { type: string } = parsedEvent;
 
-    const { type }: { type: string } = parsedEvent;
-
-    if (type === 'initialLocationLoaded') {
-      const { totalLocations, currentLocation, progress, currentSection } =
-        parsedEvent;
-
-      if (!waitForLocationsReady) {
-        setIsRendering(false);
+      if (debugEnabled) {
+        console.log(
+          '[epubjs-react-native:web]',
+          'WebView message',
+          parsedEvent
+        );
       }
 
-      setCurrentLocation(currentLocation);
-      setTotalLocations(totalLocations);
-      setProgress(progress);
-      setSection(currentSection);
+      if (type === 'initialLocationLoaded') {
+        const { totalLocations, currentLocation, progress, currentSection } =
+          parsedEvent;
 
-      eventEmitter.trigger(EventType.OnReady, {
-        totalLocations,
-        currentLocation,
-        progress,
-      });
-      return onReady(totalLocations, currentLocation, progress);
-    }
+        if (!waitForLocationsReady) {
+          setIsRendering(false);
+        }
 
-    if (!INTERNAL_EVENTS.includes(type) && onWebViewMessage) {
-      return onWebViewMessage(parsedEvent);
-    }
+        setCurrentLocation(currentLocation);
+        setTotalLocations(totalLocations);
+        setProgress(progress);
+        setSection(currentSection);
 
-    delete parsedEvent.type;
-
-    if (type === 'meta') {
-      const { metadata } = parsedEvent;
-      setMeta(metadata);
-    }
-
-    if (type === 'onStarted') {
-      setIsRendering(true);
-
-      changeTheme(defaultTheme);
-      eventEmitter.trigger(EventType.OnStarted);
-      return onStarted();
-    }
-
-    if (type === 'onReady') {
-      const {
-        totalLocations,
-        currentLocation,
-        progress,
-      }: {
-        totalLocations: number;
-        currentLocation: Location;
-        progress: number;
-      } = parsedEvent;
-      if (initialAnnotations) {
-        setInitialAnnotations(initialAnnotations);
+        eventEmitter.trigger(EventType.OnReady, {
+          totalLocations,
+          currentLocation,
+          progress,
+        });
+        return onReady(totalLocations, currentLocation, progress);
       }
 
-      if (injectedJavascript) {
-        book.current?.injectJavaScript(injectedJavascript);
+      if (!INTERNAL_EVENTS.includes(type) && onWebViewMessage) {
+        return onWebViewMessage(parsedEvent);
       }
 
-      if (initialLocation) {
-        book.current?.injectJavaScript(`
+      delete parsedEvent.type;
+
+      if (type === 'meta') {
+        const { metadata } = parsedEvent;
+        setMeta(metadata);
+      }
+
+      if (type === 'onStarted') {
+        setIsRendering(true);
+
+        changeTheme(defaultTheme);
+        eventEmitter.trigger(EventType.OnStarted);
+        return onStarted();
+      }
+
+      if (type === 'onReady') {
+        const {
+          totalLocations,
+          currentLocation,
+          progress,
+        }: {
+          totalLocations: number;
+          currentLocation: Location;
+          progress: number;
+        } = parsedEvent;
+        if (initialAnnotations) {
+          setInitialAnnotations(initialAnnotations);
+        }
+
+        if (injectedJavascript) {
+          book.current?.injectJavaScript(injectedJavascript);
+        }
+
+        if (initialLocation) {
+          book.current?.injectJavaScript(`
           rendition.display('${initialLocation}')
           .then(() => {
             const currentLocation = rendition.currentLocation();
@@ -235,301 +247,311 @@ export function View({
             });
         true;
       `);
+          return () => {};
+        }
+
+        if (!waitForLocationsReady) {
+          setIsRendering(false);
+        }
+
+        eventEmitter.trigger(EventType.OnReady, {
+          totalLocations,
+          currentLocation,
+          progress,
+        });
+        return onReady(totalLocations, currentLocation, progress);
+      }
+
+      if (type === 'onDisplayError') {
+        const { reason }: { reason: string } = parsedEvent;
+        setIsRendering(false);
+        eventEmitter.trigger(EventType.OnDisplayError, { reason });
+        return onDisplayError(reason);
+      }
+
+      if (type === 'onResized') {
+        const { layout } = parsedEvent;
+        eventEmitter.trigger(EventType.OnResized, { layout });
+        return onResized(layout);
+      }
+
+      if (type === 'onLocationChange') {
+        if (initialLocation && isRendering) {
+          return () => {};
+        }
+
+        const {
+          totalLocations,
+          currentLocation,
+          progress,
+          currentSection,
+        }: {
+          totalLocations: number;
+          currentLocation: Location;
+          progress: number;
+          currentSection: Section | null;
+        } = parsedEvent;
+        setTotalLocations(totalLocations);
+        setCurrentLocation(currentLocation);
+        setProgress(progress);
+        setSection(currentSection);
+
+        if (section?.href !== currentSection?.href) {
+          onChangeSection(currentSection);
+        }
+
+        handleChangeIsBookmarked(bookmarks, currentLocation);
+
+        if (currentLocation.atStart) setAtStart(true);
+        else if (currentLocation.atEnd) setAtEnd(true);
+        else {
+          setAtStart(false);
+          setAtEnd(false);
+        }
+        eventEmitter.trigger(EventType.OnLocationChange, {
+          totalLocations,
+          currentLocation,
+          progress,
+          currentSection,
+        });
+        return onLocationChange(
+          totalLocations,
+          currentLocation,
+          progress,
+          currentSection
+        );
+      }
+
+      if (type === EventType.OnGoToLocationComplete) {
+        const { currentLocation }: { currentLocation: Location } = parsedEvent;
+        eventEmitter.trigger(EventType.OnGoToLocationComplete, currentLocation);
+        return onGoToLocationComplete(currentLocation);
+      }
+
+      if (type === 'onSearch') {
+        const {
+          results,
+          totalResults,
+        }: { results: SearchResult[]; totalResults: number } = parsedEvent;
+        setSearchResults({ results, totalResults });
+        setIsSearching(false);
+        eventEmitter.trigger(EventType.OnSearch, { results, totalResults });
+        return onSearch(results, totalResults);
+      }
+
+      if (type === 'onLocationsReady') {
+        const {
+          epubKey,
+          totalLocations,
+          currentLocation,
+          progress,
+        }: {
+          epubKey: string;
+          locations: ePubCfi[];
+          totalLocations: number;
+          currentLocation: Location;
+          progress: number;
+        } = parsedEvent;
+        setLocations(parsedEvent.locations);
+        setKey(epubKey);
+        setTotalLocations(totalLocations);
+        setCurrentLocation(currentLocation);
+        setProgress(progress);
+
+        if (waitForLocationsReady) {
+          setIsRendering(false);
+        }
+        eventEmitter.trigger(EventType.OnLocationsReady, {
+          epubKey,
+          locations: parsedEvent.locations,
+        });
+        return onLocationsReady(epubKey, parsedEvent.locations);
+      }
+
+      if (type === 'onSelected') {
+        const { cfiRange, text }: { text: string; cfiRange: ePubCfi } =
+          parsedEvent;
+        setSelectedText({ cfiRange, cfiRangeText: text });
+        eventEmitter.trigger(EventType.OnSelected, { text, cfiRange });
+        return onSelected(text, cfiRange);
+      }
+
+      if (type === 'onUnselected') {
+        eventEmitter.trigger(EventType.OnUnselected);
+        return onUnselected();
+      }
+
+      if (type === 'onOrientationChange') {
+        const {
+          orientation,
+        }: {
+          orientation: Orientation;
+        } = parsedEvent;
+        eventEmitter.trigger(EventType.OnOrientationChange, orientation);
+        return onOrientationChange(orientation);
+      }
+
+      if (type === 'onBeginning') {
+        setAtStart(true);
+        eventEmitter.trigger(EventType.OnBeginning);
+        return onBeginning();
+      }
+
+      if (type === 'onFinish') {
+        setAtEnd(true);
+        eventEmitter.trigger(EventType.OnFinish);
+        return onFinish();
+      }
+
+      if (type === 'onRendered') {
+        const { currentSection } = parsedEvent;
+        return onRendered(parsedEvent.section, currentSection);
+      }
+
+      if (type === 'onLayout') {
+        const { layout } = parsedEvent;
+        eventEmitter.trigger(EventType.OnLayout, { layout });
+        return onLayout(layout);
+      }
+
+      if (type === 'onScroll') {
+        const {
+          contentSize,
+          layoutMeasurement,
+          contentOffset,
+          currentLocation,
+        }: ScrollEvent = parsedEvent;
+        eventEmitter.trigger(EventType.OnScroll, {
+          contentSize,
+          layoutMeasurement,
+          contentOffset,
+          currentLocation,
+        });
+        return onScroll({
+          contentSize,
+          layoutMeasurement,
+          contentOffset,
+          currentLocation,
+        });
+      }
+
+      if (type === EventType.OnDoubleTap) {
+        onDoublePress();
+        eventEmitter.trigger(EventType.OnDoubleTap);
+        return onDoubleTap();
+      }
+
+      if (type === EventType.OnSingleTap) {
+        eventEmitter.trigger(EventType.OnPress);
+        onPress();
+        eventEmitter.trigger(EventType.OnSingleTap);
+        return onSingleTap();
+      }
+
+      if (type === 'onNavigationLoaded') {
+        const { toc, landmarks }: { toc: Toc; landmarks: Landmark[] } =
+          parsedEvent;
+        setToc(toc);
+        setLandmarks(landmarks);
+        eventEmitter.trigger(EventType.OnNavigationLoaded, { toc, landmarks });
+        return onNavigationLoaded({ toc, landmarks });
+      }
+
+      if (type === 'onAddAnnotation') {
+        const { annotation }: { annotation: Annotation } = parsedEvent;
+        eventEmitter.trigger(EventType.OnAddAnnotation, annotation);
+        return onAddAnnotation(annotation);
+      }
+
+      if (type === 'onChangeAnnotations') {
+        const { annotations }: { annotations: Annotation[] } = parsedEvent;
+        setAnnotations(annotations);
+        eventEmitter.trigger(EventType.OnChangeAnnotations, annotations);
+        return onChangeAnnotations(annotations);
+      }
+
+      if (type === 'onSetInitialAnnotations') {
+        const { annotations }: { annotations: Annotation[] } = parsedEvent;
+        setAnnotations(annotations);
         return () => {};
       }
 
-      if (!waitForLocationsReady) {
-        setIsRendering(false);
+      if (type === 'onPressAnnotation') {
+        const { annotation }: { annotation: Annotation } = parsedEvent;
+        eventEmitter.trigger(EventType.OnPressAnnotation, annotation);
+        return onPressAnnotation(annotation);
       }
 
-      eventEmitter.trigger(EventType.OnReady, {
-        totalLocations,
-        currentLocation,
-        progress,
-      });
-      return onReady(totalLocations, currentLocation, progress);
-    }
-
-    if (type === 'onDisplayError') {
-      const { reason }: { reason: string } = parsedEvent;
-      setIsRendering(false);
-      eventEmitter.trigger(EventType.OnDisplayError, { reason });
-      return onDisplayError(reason);
-    }
-
-    if (type === 'onResized') {
-      const { layout } = parsedEvent;
-      eventEmitter.trigger(EventType.OnResized, { layout });
-      return onResized(layout);
-    }
-
-    if (type === 'onLocationChange') {
-      if (initialLocation && isRendering) {
-        return () => {};
+      if (type === 'onPressFootnote') {
+        const { innerHTML }: { innerHTML: string } = parsedEvent;
+        eventEmitter.trigger(EventType.OnPressFootnote, { innerHTML });
+        return onPressFootnote({ innerHTML });
       }
 
-      const {
-        totalLocations,
-        currentLocation,
-        progress,
-        currentSection,
-      }: {
-        totalLocations: number;
-        currentLocation: Location;
-        progress: number;
-        currentSection: Section | null;
-      } = parsedEvent;
-      setTotalLocations(totalLocations);
-      setCurrentLocation(currentLocation);
-      setProgress(progress);
-      setSection(currentSection);
+      if (type === 'onAddBookmark') {
+        const { bookmark }: { bookmark: Bookmark } = parsedEvent;
 
-      if (section?.href !== currentSection?.href) {
-        onChangeSection(currentSection);
+        setBookmarks([...bookmarks, bookmark]);
+        eventEmitter.trigger(EventType.OnAddBookmark, bookmark);
+        onAddBookmark(bookmark);
+        handleChangeIsBookmarked([...bookmarks, bookmark]);
+        eventEmitter.trigger(EventType.OnChangeBookmarks, [
+          ...bookmarks,
+          bookmark,
+        ]);
+        return onChangeBookmarks([...bookmarks, bookmark]);
       }
 
-      handleChangeIsBookmarked(bookmarks, currentLocation);
+      if (type === 'onRemoveBookmark') {
+        const { bookmark }: { bookmark: Bookmark } = parsedEvent;
 
-      if (currentLocation.atStart) setAtStart(true);
-      else if (currentLocation.atEnd) setAtEnd(true);
-      else {
-        setAtStart(false);
-        setAtEnd(false);
+        onRemoveBookmark(bookmark);
+        eventEmitter.trigger(EventType.OnRemoveBookmark, bookmark);
+        const filteredBookmarks = bookmarks.filter(
+          ({ id }) => id !== bookmark.id
+        );
+        handleChangeIsBookmarked(filteredBookmarks);
+        eventEmitter.trigger(EventType.OnChangeBookmarks, filteredBookmarks);
+        return onChangeBookmarks(filteredBookmarks);
       }
-      eventEmitter.trigger(EventType.OnLocationChange, {
-        totalLocations,
-        currentLocation,
-        progress,
-        currentSection,
-      });
-      return onLocationChange(
-        totalLocations,
-        currentLocation,
-        progress,
-        currentSection
-      );
-    }
 
-    if (type === EventType.OnGoToLocationComplete) {
-      const { currentLocation }: { currentLocation: Location } = parsedEvent;
-      eventEmitter.trigger(EventType.OnGoToLocationComplete, currentLocation);
-      return onGoToLocationComplete(currentLocation);
-    }
-
-    if (type === 'onSearch') {
-      const {
-        results,
-        totalResults,
-      }: { results: SearchResult[]; totalResults: number } = parsedEvent;
-      setSearchResults({ results, totalResults });
-      setIsSearching(false);
-      eventEmitter.trigger(EventType.OnSearch, { results, totalResults });
-      return onSearch(results, totalResults);
-    }
-
-    if (type === 'onLocationsReady') {
-      const {
-        epubKey,
-        totalLocations,
-        currentLocation,
-        progress,
-      }: {
-        epubKey: string;
-        locations: ePubCfi[];
-        totalLocations: number;
-        currentLocation: Location;
-        progress: number;
-      } = parsedEvent;
-      setLocations(parsedEvent.locations);
-      setKey(epubKey);
-      setTotalLocations(totalLocations);
-      setCurrentLocation(currentLocation);
-      setProgress(progress);
-
-      if (waitForLocationsReady) {
-        setIsRendering(false);
+      if (type === 'onRemoveBookmarks') {
+        handleChangeIsBookmarked([]);
+        eventEmitter.trigger(EventType.OnChangeBookmarks, []);
+        return onChangeBookmarks([]);
       }
-      eventEmitter.trigger(EventType.OnLocationsReady, {
-        epubKey,
-        locations: parsedEvent.locations,
-      });
-      return onLocationsReady(epubKey, parsedEvent.locations);
-    }
 
-    if (type === 'onSelected') {
-      const { cfiRange, text }: { text: string; cfiRange: ePubCfi } =
-        parsedEvent;
-      setSelectedText({ cfiRange, cfiRangeText: text });
-      eventEmitter.trigger(EventType.OnSelected, { text, cfiRange });
-      return onSelected(text, cfiRange);
-    }
+      if (type === 'onUpdateBookmark') {
+        const { bookmark }: { bookmark: Bookmark } = parsedEvent;
+        const Bookmarks = bookmarks;
 
-    if (type === 'onUnselected') {
-      eventEmitter.trigger(EventType.OnUnselected);
-      return onUnselected();
-    }
+        const index = Bookmarks.findIndex((item) => item.id === bookmark.id);
+        Bookmarks[index] = bookmark;
 
-    if (type === 'onOrientationChange') {
-      const {
-        orientation,
-      }: {
-        orientation: Orientation;
-      } = parsedEvent;
-      eventEmitter.trigger(EventType.OnOrientationChange, orientation);
-      return onOrientationChange(orientation);
-    }
+        onUpdateBookmark(bookmark);
+        eventEmitter.trigger(EventType.OnUpdateBookmark, bookmark);
+        handleChangeIsBookmarked(Bookmarks);
+        eventEmitter.trigger(EventType.OnChangeBookmarks, Bookmarks);
+        return onChangeBookmarks(Bookmarks);
+      }
 
-    if (type === 'onBeginning') {
-      setAtStart(true);
-      eventEmitter.trigger(EventType.OnBeginning);
-      return onBeginning();
-    }
+      if (type === 'onPageComplete') {
+        const { page }: PageCompleteEvent = parsedEvent;
+        eventEmitter.trigger(EventType.OnPageComplete, { page });
+        return onPageComplete({ page });
+      }
 
-    if (type === 'onFinish') {
-      setAtEnd(true);
-      eventEmitter.trigger(EventType.OnFinish);
-      return onFinish();
-    }
-
-    if (type === 'onRendered') {
-      const { currentSection } = parsedEvent;
-      return onRendered(parsedEvent.section, currentSection);
-    }
-
-    if (type === 'onLayout') {
-      const { layout } = parsedEvent;
-      eventEmitter.trigger(EventType.OnLayout, { layout });
-      return onLayout(layout);
-    }
-
-    if (type === 'onScroll') {
-      const {
-        contentSize,
-        layoutMeasurement,
-        contentOffset,
-        currentLocation,
-      }: ScrollEvent = parsedEvent;
-      eventEmitter.trigger(EventType.OnScroll, {
-        contentSize,
-        layoutMeasurement,
-        contentOffset,
-        currentLocation,
-      });
-      return onScroll({
-        contentSize,
-        layoutMeasurement,
-        contentOffset,
-        currentLocation,
-      });
-    }
-
-    if (type === EventType.OnDoubleTap) {
-      onDoublePress();
-      eventEmitter.trigger(EventType.OnDoubleTap);
-      return onDoubleTap();
-    }
-
-    if (type === EventType.OnSingleTap) {
-      eventEmitter.trigger(EventType.OnPress);
-      onPress();
-      eventEmitter.trigger(EventType.OnSingleTap);
-      return onSingleTap();
-    }
-
-    if (type === 'onNavigationLoaded') {
-      const { toc, landmarks }: { toc: Toc; landmarks: Landmark[] } =
-        parsedEvent;
-      setToc(toc);
-      setLandmarks(landmarks);
-      eventEmitter.trigger(EventType.OnNavigationLoaded, { toc, landmarks });
-      return onNavigationLoaded({ toc, landmarks });
-    }
-
-    if (type === 'onAddAnnotation') {
-      const { annotation }: { annotation: Annotation } = parsedEvent;
-      eventEmitter.trigger(EventType.OnAddAnnotation, annotation);
-      return onAddAnnotation(annotation);
-    }
-
-    if (type === 'onChangeAnnotations') {
-      const { annotations }: { annotations: Annotation[] } = parsedEvent;
-      setAnnotations(annotations);
-      eventEmitter.trigger(EventType.OnChangeAnnotations, annotations);
-      return onChangeAnnotations(annotations);
-    }
-
-    if (type === 'onSetInitialAnnotations') {
-      const { annotations }: { annotations: Annotation[] } = parsedEvent;
-      setAnnotations(annotations);
+      return () => {};
+    } catch (error) {
+      if (debugEnabled) {
+        console.error(
+          '[epubjs-react-native:web]',
+          'Failed to process WebView message',
+          error
+        );
+      }
       return () => {};
     }
-
-    if (type === 'onPressAnnotation') {
-      const { annotation }: { annotation: Annotation } = parsedEvent;
-      eventEmitter.trigger(EventType.OnPressAnnotation, annotation);
-      return onPressAnnotation(annotation);
-    }
-
-    if (type === 'onPressFootnote') {
-      const { innerHTML }: { innerHTML: string } = parsedEvent;
-      eventEmitter.trigger(EventType.OnPressFootnote, { innerHTML });
-      return onPressFootnote({ innerHTML });
-    }
-
-    if (type === 'onAddBookmark') {
-      const { bookmark }: { bookmark: Bookmark } = parsedEvent;
-
-      setBookmarks([...bookmarks, bookmark]);
-      eventEmitter.trigger(EventType.OnAddBookmark, bookmark);
-      onAddBookmark(bookmark);
-      handleChangeIsBookmarked([...bookmarks, bookmark]);
-      eventEmitter.trigger(EventType.OnChangeBookmarks, [
-        ...bookmarks,
-        bookmark,
-      ]);
-      return onChangeBookmarks([...bookmarks, bookmark]);
-    }
-
-    if (type === 'onRemoveBookmark') {
-      const { bookmark }: { bookmark: Bookmark } = parsedEvent;
-
-      onRemoveBookmark(bookmark);
-      eventEmitter.trigger(EventType.OnRemoveBookmark, bookmark);
-      const filteredBookmarks = bookmarks.filter(
-        ({ id }) => id !== bookmark.id
-      );
-      handleChangeIsBookmarked(filteredBookmarks);
-      eventEmitter.trigger(EventType.OnChangeBookmarks, filteredBookmarks);
-      return onChangeBookmarks(filteredBookmarks);
-    }
-
-    if (type === 'onRemoveBookmarks') {
-      handleChangeIsBookmarked([]);
-      eventEmitter.trigger(EventType.OnChangeBookmarks, []);
-      return onChangeBookmarks([]);
-    }
-
-    if (type === 'onUpdateBookmark') {
-      const { bookmark }: { bookmark: Bookmark } = parsedEvent;
-      const Bookmarks = bookmarks;
-
-      const index = Bookmarks.findIndex((item) => item.id === bookmark.id);
-      Bookmarks[index] = bookmark;
-
-      onUpdateBookmark(bookmark);
-      eventEmitter.trigger(EventType.OnUpdateBookmark, bookmark);
-      handleChangeIsBookmarked(Bookmarks);
-      eventEmitter.trigger(EventType.OnChangeBookmarks, Bookmarks);
-      return onChangeBookmarks(Bookmarks);
-    }
-
-    if (type === 'onPageComplete') {
-      const { page }: PageCompleteEvent = parsedEvent;
-      eventEmitter.trigger(EventType.OnPageComplete, { page });
-      return onPageComplete({ page });
-    }
-
-    return () => {};
   };
 
   const handleOnCustomMenuSelection = (event: {
@@ -592,6 +614,32 @@ export function View({
   useEffect(() => {
     if (book.current) registerBook(book.current);
   }, [registerBook]);
+
+  if (Platform.OS === 'web') {
+    return (
+      <RNView
+        style={{
+          width,
+          height,
+          backgroundColor: theme.body.background,
+          overflow: 'hidden',
+        }}
+      >
+        <iframe
+          title="epubjs-reader"
+          src={templateUri}
+          style={{
+            width: '100%',
+            height: '100%',
+            border: 'none',
+            backgroundColor: theme.body.background,
+            display: 'block',
+          }}
+          sandbox="allow-same-origin allow-scripts allow-popups"
+        />
+      </RNView>
+    );
+  }
 
   return (
     <GestureHandler
@@ -656,6 +704,24 @@ export function View({
         scrollEnabled={false}
         mixedContentMode="compatibility"
         onMessage={onMessage}
+        onError={(event) => {
+          if (debugEnabled) {
+            console.error(
+              '[epubjs-react-native:web]',
+              'WebView error',
+              event.nativeEvent
+            );
+          }
+        }}
+        onHttpError={(event) => {
+          if (debugEnabled) {
+            console.error(
+              '[epubjs-react-native:web]',
+              'WebView HTTP error',
+              event.nativeEvent
+            );
+          }
+        }}
         menuItems={menuItems}
         onCustomMenuSelection={handleOnCustomMenuSelection}
         allowingReadAccessToURL={allowedUris}
