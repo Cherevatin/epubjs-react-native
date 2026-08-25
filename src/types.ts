@@ -501,7 +501,7 @@ export interface ReaderProps {
    */
   defaultTheme?: Theme;
 
-  fileSystem(): FileSystem;
+  fileSystem?: () => FileSystem;
 
   /**
    * This will allow the sandbox content to run scripts, but currently makes the sandbox insecure.

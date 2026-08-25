@@ -10,8 +10,12 @@ import { getSourceType } from './utils/getSourceType';
 import { getSourceName } from './utils/getPathname';
 import { SourceType } from './utils/enums/source-type.enum';
 import { isFsUri } from './utils/isFsUri';
+import { browserFileSystem } from './utils/browserFileSystem';
 import jszip from './jszip';
 import epubjs from './epubjs';
+
+const toDataUri = (content: string, mimeType: string) =>
+  `data:${mimeType};charset=utf-8,${encodeURIComponent(content)}`;
 
 export function Reader({
   src,
@@ -35,6 +39,8 @@ export function Reader({
   charactersPerLocation,
   ...rest
 }: ReaderProps) {
+  const isWeb = Platform.OS === 'web';
+  const fileSystem = (useFileSystem ?? browserFileSystem)();
   const {
     downloadFile,
     size: fileSize,
@@ -44,7 +50,7 @@ export function Reader({
     documentDirectory,
     getFileInfo,
     writeAsStringAsync,
-  } = useFileSystem();
+  } = fileSystem;
   const enableSelection = menuItems ? true : rest.enableSelection || false;
   const allowPopups = onPressExternalLink ? true : rest.allowPopups || false;
 
@@ -58,21 +64,28 @@ export function Reader({
     (async () => {
       setIsLoading(true);
 
-      const jszipFileUri = `${documentDirectory}/jszip.min.js`;
-      const epubjsFileUri = `${documentDirectory}/epub.min.js`;
-      try {
-        await writeAsStringAsync(jszipFileUri, jszip);
-      } catch (e) {
-        throw new Error('failed to write jszip js file');
+      const jszipFileUri = isWeb
+        ? toDataUri(jszip, 'application/javascript')
+        : `${documentDirectory}/jszip.min.js`;
+      const epubjsFileUri = isWeb
+        ? toDataUri(epubjs, 'application/javascript')
+        : `${documentDirectory}/epub.min.js`;
+
+      if (!isWeb) {
+        try {
+          await writeAsStringAsync(jszipFileUri, jszip);
+        } catch (e) {
+          throw new Error('failed to write jszip js file');
+        }
+
+        try {
+          await writeAsStringAsync(epubjsFileUri, epubjs);
+        } catch (e) {
+          throw new Error('failed to write epubjs js file');
+        }
       }
 
-      try {
-        await writeAsStringAsync(epubjsFileUri, epubjs);
-      } catch (e) {
-        throw new Error('failed to write epubjs js file');
-      }
-
-      setAllowedUris(`${jszipFileUri},${epubjsFileUri}`);
+      setAllowedUris(isWeb ? '*' : `${jszipFileUri},${epubjsFileUri}`);
 
       if (src) {
         const sourceType = getSourceType(src, offlineAccess);
@@ -99,51 +112,36 @@ export function Reader({
           if (isSourceInFileSystem) {
             setAllowedUris(`${source}${jszipFileUri},${epubjsFileUri}`);
           }
-          if (sourceType === SourceType.BASE64) {
-            setTemplate(
-              injectWebViewVariables({
-                jszip: jszipFileUri,
-                epubjs: epubjsFileUri,
-                type: SourceType.BASE64,
-                book: source,
-                theme: defaultTheme,
-                locations: initialLocations,
-                enableSelection,
-                allowScriptedContent,
-                allowPopups,
-                manager,
-                flow,
-                snap,
-                spread,
-                fullsize,
-                charactersPerLocation,
-              })
-            );
+          const templateSource = injectWebViewVariables({
+            jszip: jszipFileUri,
+            epubjs: epubjsFileUri,
+            type:
+              sourceType === SourceType.BASE64
+                ? SourceType.BASE64
+                : SourceType.BINARY,
+            book: source,
+            theme: defaultTheme,
+            locations: initialLocations,
+            enableSelection,
+            allowScriptedContent,
+            allowPopups,
+            manager,
+            flow,
+            snap,
+            spread,
+            fullsize,
+            charactersPerLocation,
+          });
 
-            setIsLoading(false);
-          } else {
-            setTemplate(
-              injectWebViewVariables({
-                jszip: jszipFileUri,
-                epubjs: epubjsFileUri,
-                type: SourceType.BINARY,
-                book: source,
-                theme: defaultTheme,
-                locations: initialLocations,
-                enableSelection,
-                allowScriptedContent,
-                allowPopups,
-                manager,
-                flow,
-                snap,
-                spread,
-                fullsize,
-                charactersPerLocation,
-              })
-            );
+          setTemplate(templateSource);
 
-            setIsLoading(false);
+          if (isWeb) {
+            setTemplateUrl(
+              `data:text/html;charset=utf-8,${encodeURIComponent(templateSource)}`
+            );
           }
+
+          setIsLoading(false);
         }
 
         if (isExternalSource) {
@@ -157,25 +155,31 @@ export function Reader({
             !offlineAccess &&
             (sourceType === SourceType.OPF || sourceType === SourceType.EPUB)
           ) {
-            setTemplate(
-              injectWebViewVariables({
-                jszip: jszipFileUri,
-                epubjs: epubjsFileUri,
-                type: sourceType,
-                book: source,
-                theme: defaultTheme,
-                locations: initialLocations,
-                enableSelection,
-                allowScriptedContent,
-                allowPopups,
-                manager,
-                flow,
-                snap,
-                spread,
-                fullsize,
-                charactersPerLocation,
-              })
-            );
+            const templateSource = injectWebViewVariables({
+              jszip: jszipFileUri,
+              epubjs: epubjsFileUri,
+              type: sourceType,
+              book: source,
+              theme: defaultTheme,
+              locations: initialLocations,
+              enableSelection,
+              allowScriptedContent,
+              allowPopups,
+              manager,
+              flow,
+              snap,
+              spread,
+              fullsize,
+              charactersPerLocation,
+            });
+
+            setTemplate(templateSource);
+
+            if (isWeb) {
+              setTemplateUrl(
+                `data:text/html;charset=utf-8,${encodeURIComponent(templateSource)}`
+              );
+            }
 
             setIsLoading(false);
           } else {
@@ -191,25 +195,31 @@ export function Reader({
 
             setAllowedUris(`${bookFileUri},${jszipFileUri},${epubjsFileUri}`);
 
-            setTemplate(
-              injectWebViewVariables({
-                jszip: jszipFileUri,
-                epubjs: epubjsFileUri,
-                type: sourceType,
-                book: bookFileUri,
-                theme: defaultTheme,
-                locations: initialLocations,
-                enableSelection,
-                allowScriptedContent,
-                allowPopups,
-                manager,
-                flow,
-                snap,
-                spread,
-                fullsize,
-                charactersPerLocation,
-              })
-            );
+            const templateSource = injectWebViewVariables({
+              jszip: jszipFileUri,
+              epubjs: epubjsFileUri,
+              type: sourceType,
+              book: bookFileUri,
+              theme: defaultTheme,
+              locations: initialLocations,
+              enableSelection,
+              allowScriptedContent,
+              allowPopups,
+              manager,
+              flow,
+              snap,
+              spread,
+              fullsize,
+              charactersPerLocation,
+            });
+
+            setTemplate(templateSource);
+
+            if (isWeb) {
+              setTemplateUrl(
+                `data:text/html;charset=utf-8,${encodeURIComponent(templateSource)}`
+              );
+            }
 
             setIsLoading(false);
           }
@@ -225,6 +235,7 @@ export function Reader({
     enableSelection,
     initialLocations,
     injectWebViewVariables,
+    isWeb,
     setIsLoading,
     src,
     // ! Causing unknown loop
@@ -245,10 +256,10 @@ export function Reader({
         throw new Error('Error saving index.html file:');
       }
     };
-    if (template) {
+    if (template && !isWeb) {
       saveTemplateFileToDoc();
     }
-  }, [documentDirectory, template, writeAsStringAsync]);
+  }, [documentDirectory, isWeb, template, writeAsStringAsync]);
 
   if (isLoading) {
     return renderLoadingFileComponent({

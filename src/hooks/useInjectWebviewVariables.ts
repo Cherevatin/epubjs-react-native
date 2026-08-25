@@ -47,8 +47,14 @@ export function useInjectWebViewVariables() {
           /<script id="epubjs"><\/script>/,
           `<script src="${epubjs}"></script>`
         )
-        .replace(/const type = window.type;/, `const type = '${type}';`)
-        .replace(/const file = window.book;/, `const file = '${book}';`)
+        .replace(
+          /const type = window.type;/,
+          `const type = ${JSON.stringify(type)};`
+        )
+        .replace(
+          /const file = window.book;/,
+          `const file = ${JSON.stringify(book)};`
+        )
         .replace(
           /const theme = window.theme;/,
           `const theme = ${JSON.stringify(theme)};`

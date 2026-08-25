@@ -45,6 +45,21 @@ For bare react-native projects, add the following permissions to `Info.plist`:
 <true/>
 ```
 
+## Web support
+
+This package can now be used in browser builds as well. On web, it skips the native file-system dependency and loads the EPUB.js assets from in-memory data URLs instead of writing files to the device document directory.
+
+```tsx
+import * as React from 'react';
+import { Reader } from '@epubjs-react-native/core';
+
+export default function App() {
+  return <Reader src="https://example.com/book.epub" />;
+}
+```
+
+When running on web, `fileSystem` is optional and the reader uses a browser fallback automatically.
+
 ## Usage
 
 Wrap your root component in ReaderProvider. If you have a vanilla React Native project, it's a good idea to add it in the component which is passed to AppRegistry.registerComponent. This will usually be in the index.js file. If you have an Expo project, you can do this inside the exported component in the App.js file.
