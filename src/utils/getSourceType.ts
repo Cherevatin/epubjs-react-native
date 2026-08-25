@@ -9,16 +9,29 @@ export function getSourceType(
     return offlineAccess.fileType;
   }
 
-  if (source.includes('base64,') || source.length > 1000) {
+  const normalizedSource = source.trim();
+
+  if (normalizedSource.includes('base64,') || normalizedSource.length > 1000) {
     return SourceType.BASE64;
   }
 
-  if (source.includes('.epub')) {
+  if (normalizedSource.toLowerCase().includes('.epub')) {
     return SourceType.EPUB;
   }
 
-  if (source.includes('.opf')) {
+  if (normalizedSource.toLowerCase().includes('.opf')) {
     return SourceType.OPF;
   }
+
+  const lastPathSegment = normalizedSource.split(/[/?#]/).filter(Boolean).pop();
+
+  const hasFileExtension = Boolean(
+    lastPathSegment && /\.[a-z0-9]+$/i.test(lastPathSegment)
+  );
+
+  if (!hasFileExtension && /^(https?:|file:|\/|\.)/i.test(normalizedSource)) {
+    return SourceType.EPUB;
+  }
+
   return undefined;
 }
