@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Platform } from 'react-native';
 import { LoadingFile } from './utils/LoadingFile';
 import type { ReaderProps } from './types';
@@ -40,7 +40,10 @@ export function Reader({
   ...rest
 }: ReaderProps) {
   const isWeb = Platform.OS === 'web';
-  const fileSystem = (useFileSystem ?? browserFileSystem)();
+  const fileSystem = useMemo(
+    () => (useFileSystem ?? browserFileSystem)(),
+    [useFileSystem]
+  );
   const {
     downloadFile,
     size: fileSize,
