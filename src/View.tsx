@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Dimensions, Platform, View as RNView } from 'react-native';
+import { Dimensions, View as RNView } from 'react-native';
 import { WebView } from 'react-native-webview';
 import type {
   ShouldStartLoadRequest,
@@ -131,6 +131,12 @@ export function View({
     eventEmitter,
   } = useContext(ReaderContext);
   const book = useRef<WebView>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const isWebEnvironment =
+    typeof window !== 'undefined' && typeof document !== 'undefined';
+  const debugEnabled =
+    typeof globalThis !== 'undefined' &&
+    Boolean((globalThis as any).epubjsReactNativeDebug);
   const [selectedText, setSelectedText] = useState<{
     cfiRange: string;
     cfiRangeText: string;
@@ -139,12 +145,6 @@ export function View({
   useEffect(() => {
     setFlow(flow || 'auto');
   }, [flow, setFlow]);
-
-  useEffect(() => {
-    if (getInjectionJavascriptFn && book.current) {
-      getInjectionJavascriptFn(book.current.injectJavaScript);
-    }
-  }, [getInjectionJavascriptFn]);
 
   const handleChangeIsBookmarked = (
     items: Bookmark[],
@@ -159,10 +159,6 @@ export function View({
     setIsBookmarked(isBookmarked);
     onIsBookmarked(isBookmarked);
   };
-
-  const debugEnabled =
-    typeof globalThis !== 'undefined' &&
-    Boolean((globalThis as any).epubjsReactNativeDebug);
 
   const onMessage = (event: WebViewMessageEvent) => {
     try {
@@ -243,7 +239,8 @@ export function View({
             const progress = rendition.book.locations.percentageFromCfi(currentLocation.start.cfi)
             const totalLocations = rendition.book.locations.total;
             const currentSection = rendition.book.getChapterFromLocation(currentLocation);
-            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'initialLocationLoaded', currentLocation, totalLocations, progress, currentSection }));
+            const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView !== null ? window.ReactNativeWebView : (window.parent || window);
+            reactNativeWebview.postMessage(JSON.stringify({ type: 'initialLocationLoaded', currentLocation, totalLocations, progress, currentSection }));
             });
         true;
       `);
@@ -453,7 +450,10 @@ export function View({
           parsedEvent;
         setToc(toc);
         setLandmarks(landmarks);
-        eventEmitter.trigger(EventType.OnNavigationLoaded, { toc, landmarks });
+        eventEmitter.trigger(EventType.OnNavigationLoaded, {
+          toc,
+          landmarks,
+        });
         return onNavigationLoaded({ toc, landmarks });
       }
 
@@ -554,6 +554,49 @@ export function View({
     }
   };
 
+  useEffect(() => {
+    if (!isWebEnvironment) {
+      return () => {};
+    }
+
+    const handleBrowserMessage = (event: MessageEvent) => {
+      if (event.source !== iframeRef.current?.contentWindow) {
+        return;
+      }
+
+      if (typeof event.data !== 'string') {
+        return;
+      }
+
+      try {
+        const parsedEvent = JSON.parse(event.data);
+        if (parsedEvent && typeof parsedEvent.type === 'string') {
+          onMessage({
+            nativeEvent: { data: event.data },
+          } as WebViewMessageEvent);
+        }
+      } catch (error) {
+        if (debugEnabled) {
+          console.error(
+            '[epubjs-react-native:web]',
+            'Failed to parse iframe message',
+            error
+          );
+        }
+      }
+    };
+
+    window.addEventListener('message', handleBrowserMessage);
+    return () => window.removeEventListener('message', handleBrowserMessage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debugEnabled]);
+
+  useEffect(() => {
+    if (getInjectionJavascriptFn && book.current) {
+      getInjectionJavascriptFn(book.current.injectJavaScript);
+    }
+  }, [getInjectionJavascriptFn]);
+
   const handleOnCustomMenuSelection = (event: {
     nativeEvent: {
       label: string;
@@ -615,7 +658,7 @@ export function View({
     if (book.current) registerBook(book.current);
   }, [registerBook]);
 
-  if (Platform.OS === 'web') {
+  if (isWebEnvironment) {
     return (
       <RNView
         style={{
@@ -626,6 +669,7 @@ export function View({
         }}
       >
         <iframe
+          ref={iframeRef}
           title="epubjs-reader"
           src={templateUri}
           style={{

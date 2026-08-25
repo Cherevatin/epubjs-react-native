@@ -94,7 +94,7 @@ export default `
         allowPopups: allowPopups,
         allowScriptedContent: allowScriptedContent
       });
-     const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView: window;
+     const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView : (window.parent || window);
       reactNativeWebview.postMessage(JSON.stringify({ type: "onStarted" }));
       
       function flatten(chapters) {

@@ -965,7 +965,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       const limit = ${limit || 20};
       const term = ${JSON.stringify(term)};
       const sectionIds = ${JSON.stringify(options?.sectionIds ?? [])};
-      const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView: window;
+      const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView : (window.parent || window);
       if (!term) {
         reactNativeWebview.postMessage(
           JSON.stringify({ type: 'onSearch', results: [] })
@@ -1188,7 +1188,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       book,
       `
         const initialAnnotations = JSON.stringify(${transform});
-        const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView: window;
+        const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView : (window.parent || window);
 
         reactNativeWebview.postMessage(JSON.stringify({
           type: 'onSetInitialAnnotations',
@@ -1233,7 +1233,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
       const chapter = getChapter(${JSON.stringify(location)});
       const cfi = makeRangeCfi(location.start.cfi, location.end.cfi);
       const data = ${JSON.stringify(data)};
-      const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView: window;
+      const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView : (window.parent || window);
 
       book.getRange(cfi).then(range => {
         reactNativeWebview.postMessage(JSON.stringify({
@@ -1257,7 +1257,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
         book,
         `
         const bookmark = ${JSON.stringify(bookmark)};
-        const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView: window;
+        const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView : (window.parent || window);
         reactNativeWebview.postMessage(JSON.stringify({
           type: "onRemoveBookmark",
           bookmark,
@@ -1282,7 +1282,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
     webViewInjectFunctions.injectJavaScript(
       book,
       `
-      const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView: window;
+      const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView : (window.parent || window);
       reactNativeWebview.postMessage(JSON.stringify({
         type: "onRemoveBookmarks",
       }));
@@ -1312,7 +1312,7 @@ function ReaderProvider({ children }: { children: React.ReactNode }) {
         book,
         `
         const bookmark = ${JSON.stringify(bookmark)};
-         const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView: window;
+         const reactNativeWebview = window.ReactNativeWebView !== undefined && window.ReactNativeWebView!== null ? window.ReactNativeWebView : (window.parent || window);
           reactNativeWebview.postMessage(JSON.stringify({
           type: "onUpdateBookmark",
           bookmark,
