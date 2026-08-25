@@ -29,7 +29,10 @@ export function getSourceType(
     lastPathSegment && /\.[a-z0-9]+$/i.test(lastPathSegment)
   );
 
-  if (!hasFileExtension && /^(https?:|file:|\/|\.)/i.test(normalizedSource)) {
+  if (
+    !hasFileExtension &&
+    /^(blob:|https?:|file:|\/|\.)/i.test(normalizedSource)
+  ) {
     return SourceType.EPUB;
   }
 
